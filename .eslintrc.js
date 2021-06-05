@@ -24,7 +24,6 @@ module.exports = {
   },
   plugins: ['react', '@typescript-eslint', 'import', 'jsx-a11y'],
   rules: {
-    indent: ['error', 2],
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
     'react/react-in-jsx-scope': 'off',
