@@ -14,17 +14,21 @@ function Home() {
       leave,
       createRoom,
       remoteUsers,
-
       token,
       error,
       joinRoom,
       publishTracks,
+      isEnabledAudio,
+      isEnabledVideo,
+      toggleMute,
     },
   } = useAgora();
 
+  console.log({ isEnabledAudio, isEnabledVideo });
   return (
     <div className="call">
       <h1>{error?.message}</h1>
+      <h1>{localAudioTrack?.getVolumeLevel()}</h1>
       <form className="call-form">
         <label>
           Token(Optional):
@@ -72,6 +76,27 @@ function Home() {
             }}
           >
             Publish
+          </button>
+          <button
+            id="join"
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={() => {
+              toggleMute('audio');
+            }}
+          >
+            {isEnabledAudio ? 'Mute audio' : 'UnMute audio'}
+          </button>
+
+          <button
+            id="join"
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={() => {
+              toggleMute('video');
+            }}
+          >
+            {isEnabledVideo ? 'Mute video' : 'UnMute video'}
           </button>
 
           <button

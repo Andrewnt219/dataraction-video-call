@@ -18,6 +18,7 @@
     "baseUrl": "./src",
     "paths": {
       "_utils/*": ["utils/*"],
+      "_lib/*": ["lib/*"],
       "_pages/*": ["pages/*"],
       "_server/*": ["server/*"],
       "_hooks/*": ["hooks/*"],

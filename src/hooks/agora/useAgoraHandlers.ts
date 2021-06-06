@@ -23,6 +23,13 @@ export const useAgoraHandlers = (
   const [localAudioTrack, setLocalAudioTrack] =
     useState<IMicrophoneAudioTrack>();
 
+  const [isEnabledVideo, setIsEnabledVideo] = useState(
+    localVideoTrack?.getMediaStreamTrack().enabled ?? true
+  );
+  const [isEnabledAudio, setIsEnabledAudio] = useState(
+    localAudioTrack?.getMediaStreamTrack().enabled ?? true
+  );
+
   const [token, setToken] = useState<string | null>(null);
   const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([]);
 
@@ -146,17 +153,32 @@ export const useAgoraHandlers = (
     try {
       switch (trackType) {
         case '*':
-          localAudioTrack &&
-            localVideoTrack &&
-            (await client.unpublish([localVideoTrack, localAudioTrack]));
+          if (localAudioTrack) {
+            await client.unpublish(localAudioTrack);
+            setLocalAudioTrack(undefined);
+          }
+
+          if (localVideoTrack) {
+            await client.unpublish(localVideoTrack);
+            setLocalVideoTrack(undefined);
+          }
+
           return;
 
         case 'audio':
-          localAudioTrack && (await client.unpublish(localAudioTrack));
+          if (localAudioTrack) {
+            await client.unpublish(localAudioTrack);
+            setLocalAudioTrack(undefined);
+          }
+
           return;
 
         case 'video':
-          localVideoTrack && (await client.unpublish(localVideoTrack));
+          if (localVideoTrack) {
+            await client.unpublish(localVideoTrack);
+            setLocalVideoTrack(undefined);
+          }
+
           return;
 
         default:
@@ -165,6 +187,36 @@ export const useAgoraHandlers = (
       // setJoinState('joined');
     } catch (error) {
       console.log({ error });
+    }
+  };
+
+  // Toggle mute for a media type
+  const toggleMute = (trackType: TrackType) => {
+    switch (trackType) {
+      case 'audio':
+        if (localAudioTrack !== undefined) {
+          const isEnabled = localAudioTrack.getMediaStreamTrack().enabled;
+
+          localAudioTrack.getMediaStreamTrack().enabled = !isEnabled;
+          setIsEnabledAudio(!isEnabled);
+        }
+        return;
+
+      case 'video':
+        if (localVideoTrack !== undefined) {
+          const isMuted = !localVideoTrack.isPlaying;
+
+          // NOTE this is weird, !isMutedVideo() doesn't work
+          localVideoTrack.setEnabled(isMuted ? true : false);
+
+          // NOTE cannot call isVideoMuted directly
+          // because there is a short delay of isPlaying state switch
+          setIsEnabledVideo(isMuted);
+        }
+        return;
+
+      default:
+        return;
     }
   };
 
@@ -225,12 +277,15 @@ export const useAgoraHandlers = (
   }, [client]);
 
   return {
+    isEnabledAudio,
+    isEnabledVideo,
     createRoom,
     leave,
     publishTracks,
     localAudioTrack,
     localVideoTrack,
     token,
+    toggleMute,
     error,
     joinRoom,
     remoteUsers,
