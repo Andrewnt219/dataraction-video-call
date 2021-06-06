@@ -18,12 +18,13 @@ function Home() {
       error,
       joinRoom,
       publishTracks,
-      isMutedAudio,
-      isMutedVideo,
+      isEnabledAudio,
+      isEnabledVideo,
       toggleMute,
     },
   } = useAgora();
 
+  console.log({ isEnabledAudio, isEnabledVideo });
   return (
     <div className="call">
       <h1>{error?.message}</h1>
@@ -84,7 +85,7 @@ function Home() {
               toggleMute('audio');
             }}
           >
-            {isMutedAudio ? 'UnMute audio' : 'Mute audio'}
+            {isEnabledAudio ? 'Mute audio' : 'UnMute audio'}
           </button>
 
           <button
@@ -95,7 +96,7 @@ function Home() {
               toggleMute('video');
             }}
           >
-            {isMutedVideo ? 'UnMute video' : 'Mute video'}
+            {isEnabledVideo ? 'Mute video' : 'UnMute video'}
           </button>
 
           <button
