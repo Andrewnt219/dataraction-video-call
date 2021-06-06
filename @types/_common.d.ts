@@ -1,13 +1,13 @@
 declare module '_common' {
   import { GetStaticPathsResult, GetStaticPropsResult } from 'next';
 
-  type Error = {
+  type ErrorMessage = {
     message: string;
   };
 
   type ResultError<D = null> = {
     type: 'error';
-    error: Error;
+    error: ErrorMessage;
     data: D | null;
   };
 
