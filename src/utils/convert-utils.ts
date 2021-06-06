@@ -1,7 +1,7 @@
 import { AxiosError } from 'axios';
-import { Error, ResultError } from '_common';
+import { ErrorMessage, ResultError } from '_common';
 
-export function getErrorMessage(error?: AxiosError<ResultError>): Error {
+export function getErrorMessage(error?: AxiosError<ResultError>): ErrorMessage {
   if (!error) {
     return { message: 'Something went wrong' };
   }

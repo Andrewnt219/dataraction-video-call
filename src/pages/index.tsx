@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import useAgora from '_hooks/useAgora';
+import useAgora from '_hooks/agora/useAgora';
 import AgoraVideoPlayer from '../components/AgoraVideoPlayer';
 
 function Home() {
@@ -7,15 +7,19 @@ function Home() {
   const [inviteToken, setInviteToken] = useState('');
 
   const {
-    localAudioTrack,
-    localVideoTrack,
-    leave,
-    publish,
-    createRoom,
-    remoteUsers,
     client,
-    token,
-    error,
+    handlers: {
+      localAudioTrack,
+      localVideoTrack,
+      leave,
+      createRoom,
+      remoteUsers,
+
+      token,
+      error,
+      joinRoom,
+      publishTracks,
+    },
   } = useAgora();
 
   return (
@@ -64,7 +68,18 @@ function Home() {
             type="button"
             className="btn btn-primary btn-sm"
             onClick={() => {
-              publish(channel, inviteToken);
+              publishTracks('*');
+            }}
+          >
+            Publish
+          </button>
+
+          <button
+            id="join"
+            type="button"
+            className="btn btn-primary btn-sm"
+            onClick={() => {
+              joinRoom({ channelName: channel, token: inviteToken });
             }}
           >
             Join
