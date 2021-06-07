@@ -99,7 +99,7 @@ export const useAgoraHandlers = (
       joinRoom(roomOptions);
 
       // // setJoinState('created');
-      publishTracks('*');
+      createLocalVideoAndAudioTrack();
 
       setToken(data.data.token);
     } catch (err) {
