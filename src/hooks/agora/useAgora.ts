@@ -8,5 +8,5 @@ export default function useAgora(clientConfig?: ClientConfig) {
   // const [joinState, setJoinState] = useState<ReturnType['joinState']>('idle');
   const handlers = useAgoraHandlers(client, agoraRtc);
 
-  return { handlers, client };
+  return { handlers, client, agoraRtc };
 }
