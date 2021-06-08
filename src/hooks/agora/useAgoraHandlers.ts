@@ -23,6 +23,8 @@ export const useAgoraHandlers = (
   const [localAudioTrack, setLocalAudioTrack] =
     useState<IMicrophoneAudioTrack>();
 
+  // TODO #13 make the state the source of truth for mute
+  // don't rely on getMediaStream().enabled
   const [isEnabledVideo, setIsEnabledVideo] = useState(
     localVideoTrack?.getMediaStreamTrack().enabled ?? true
   );
@@ -99,7 +101,7 @@ export const useAgoraHandlers = (
       joinRoom(roomOptions);
 
       // // setJoinState('created');
-      publishTracks('*');
+      createLocalVideoAndAudioTrack();
 
       setToken(data.data.token);
     } catch (err) {
@@ -110,6 +112,7 @@ export const useAgoraHandlers = (
 
   // join an existing room
   const joinRoom: JoinRoom = async ({ channelName, token, uid }) => {
+    createLocalVideoAndAudioTrack();
     await client?.join(NEXT_PUBLIC_AGORA_APP_ID, channelName, token, uid);
   };
 
