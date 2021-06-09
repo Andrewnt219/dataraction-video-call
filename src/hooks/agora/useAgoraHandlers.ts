@@ -33,6 +33,7 @@ export const useAgoraHandlers = (
   );
 
   const [token, setToken] = useState<string | null>(null);
+  const [channel, setChannel] = useState<string>('');
   const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([]);
 
   const [error, setError] = useState<null | ErrorMessage>(null);
@@ -86,7 +87,9 @@ export const useAgoraHandlers = (
     if (!client) return;
 
     try {
-      const { data } = await axios.get<ApiAgoraGetRoomToken.Data>(
+      const {
+        data: { data },
+      } = await axios.get<ApiAgoraGetRoomToken.Data>(
         '/api/agora/getRoomToken',
         {
           params,
@@ -94,19 +97,17 @@ export const useAgoraHandlers = (
       );
 
       const roomOptions: RoomOptions = {
-        channelName: params.channelName,
-        token: data.data.token,
+        channelName: data.channelName,
+        token: data.token,
         uid: params.userUid?.toString(),
       };
       joinRoom(roomOptions);
-
-      // // setJoinState('created');
       createLocalVideoAndAudioTrack();
 
-      setToken(data.data.token);
+      setToken(data.token);
+      setChannel(data.channelName);
     } catch (err) {
       setError(getErrorMessage(err));
-      // setJoinState('error');
     }
   };
 
@@ -293,6 +294,7 @@ export const useAgoraHandlers = (
     joinRoom,
     remoteUsers,
     unpublishTracks,
+    channel,
   };
 };
 
