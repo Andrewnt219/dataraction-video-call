@@ -4,25 +4,19 @@ import {
   NEXT_PUBLIC_AGORA_APP_ID,
 } from 'constants/agora';
 import { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
+import { uid } from 'uid';
 import { InvalidQuery, ResultError, ResultSuccess, ValidQuery } from '_common';
-import { apiHanler, create400Response } from '_server/utils/api-utils';
-import {
-  createInvalidQuery,
-  createResult,
-  createValidQuery,
-} from '_utils/create-utils';
-import {
-  isNonEmptyQueryString,
-  isValidNumberQuery,
-} from '_utils/validate-utils';
+import { apiHanler } from '_server/utils/api-utils';
+import { createResult, createValidQuery } from '_utils/create-utils';
+import { isNullOrEmptyString, isValidNumberQuery } from '_utils/validate-utils';
 
 export type Query = {
-  channelName: string;
+  channelName?: string;
   userUid?: number;
   role?: 'publisher' | 'subscriber';
   expireTime?: number;
 };
-export type Data = ResultSuccess<{ token: string }>;
+export type Data = ResultSuccess<{ token: string; channelName: string }>;
 
 const get: NextApiHandler<Data | ResultError> = (req, res) => {
   const { query } = req;
@@ -32,18 +26,18 @@ const get: NextApiHandler<Data | ResultError> = (req, res) => {
     return;
   }
 
-  const {
-    channelName,
-    expireTime: queriedExpireTime,
-    role: queriedRole,
-    userUid: queriedUid,
-  } = validatedQuery.query;
+  const { query: validQuery } = validatedQuery;
 
-  const userUid: number = isValidNumberQuery(queriedUid) ? +queriedUid : 0;
+  const channelName = isNullOrEmptyString(validQuery.channelName)
+    ? uid(8)
+    : validQuery.channelName;
+  const userUid: number = isValidNumberQuery(validQuery.userUid)
+    ? +validQuery.userUid
+    : 0;
   const role: Query['role'] =
-    queriedRole === 'publisher' ? 'publisher' : 'subscriber';
-  const expireTime: number = isValidNumberQuery(queriedExpireTime)
-    ? +queriedExpireTime
+    validQuery.role === 'publisher' ? 'publisher' : 'subscriber';
+  const expireTime: number = isValidNumberQuery(validQuery.expireTime)
+    ? +validQuery.expireTime
     : 3600;
 
   // calculate privilege expire time
@@ -61,21 +55,14 @@ const get: NextApiHandler<Data | ResultError> = (req, res) => {
     privilegeExpireTime
   );
 
-  return res.status(200).json(createResult({ token }));
+  return res.status(200).json(createResult({ token, channelName }));
 };
 
 function validateQuery(
   query: NextApiRequest['query'],
   res: NextApiResponse
 ): ValidQuery<Query> | InvalidQuery {
-  const { channelName } = query;
-
-  if (!isNonEmptyQueryString(channelName)) {
-    create400Response(res, 'Channel name is missing or invalid');
-    return createInvalidQuery();
-  }
-
-  return createValidQuery({ channelName });
+  return createValidQuery({});
 }
 
 export default apiHanler({ get });

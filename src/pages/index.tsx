@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import React, { useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { AgoraProvider } from '_context/AgoraContext';
 import useAgora from '_hooks/agora/useAgora';
 import AgoraVideoPlayer from '../components/AgoraVideoPlayer';
@@ -11,9 +11,6 @@ const AgoraDeviceTestModal = dynamic(
   }
 );
 function Home() {
-  const [channel, setChannel] = useState('Public');
-  const [inviteToken, setInviteToken] = useState('');
-
   const {
     client,
     agoraRtc,
@@ -30,8 +27,18 @@ function Home() {
       isEnabledAudio,
       isEnabledVideo,
       toggleMute,
+      channel,
     },
   } = useAgora();
+
+  const invitation = useRef<string>();
+
+  useEffect(() => {
+    if (token && channel) {
+      invitation.current =
+        window.location.origin + `?token=${token}&channelName=${channel}`;
+    }
+  }, [token, channel]);
 
   return (
     <AgoraProvider
@@ -41,32 +48,14 @@ function Home() {
         <h1>{error?.message}</h1>
         <h1>{localAudioTrack?.getVolumeLevel()}</h1>
         <form className="call-form">
-          <label>
-            Token(Optional):
-            <input type="text" name="token" value={token ?? ''} />
-          </label>
-          <label>
-            Channel:
-            <input
-              type="text"
-              name="channel"
-              onChange={(event) => {
-                setChannel(event.target.value);
-              }}
-              value={channel}
-            />
-          </label>
-          <label>
-            Invite Token:
-            <input
-              type="text"
-              name="channel"
-              onChange={(event) => {
-                setInviteToken(event.target.value);
-              }}
-              value={inviteToken}
-            />
-          </label>
+          <a
+            href={invitation.current}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {invitation.current}
+          </a>
+
           <div className="button-group">
             <button
               id="create"
@@ -88,6 +77,7 @@ function Home() {
             >
               Publish
             </button>
+
             <button
               id="join"
               type="button"
@@ -110,16 +100,6 @@ function Home() {
               {isEnabledVideo ? 'Mute video' : 'UnMute video'}
             </button>
 
-            <button
-              id="join"
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => {
-                joinRoom({ channelName: channel, token: inviteToken });
-              }}
-            >
-              Join
-            </button>
             <button
               id="leave"
               type="button"
