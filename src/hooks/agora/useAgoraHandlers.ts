@@ -190,23 +190,19 @@ export const useAgoraHandlers = (
   // Toggle mute for a media type
   const toggleAudio = useCallback(() => {
     if (localAudioTrack !== undefined) {
-      const isEnabled = localAudioTrack.getMediaStreamTrack().enabled;
-
-      localAudioTrack.getMediaStreamTrack().enabled = !isEnabled;
-      setIsEnabledAudio(!isEnabled);
+      localAudioTrack.setEnabled(!isEnabledAudio);
+      setIsEnabledAudio((prev) => !prev);
     }
     return;
-  }, [localAudioTrack]);
+  }, [isEnabledAudio, localAudioTrack]);
 
   const toggleVideo = useCallback(() => {
     if (localVideoTrack !== undefined) {
-      const isMuted = !localVideoTrack.isPlaying;
-      localVideoTrack.setEnabled(isMuted ? true : false);
-
-      setIsEnabledVideo(isMuted);
+      localVideoTrack.setEnabled(!isEnabledVideo);
+      setIsEnabledVideo((prev) => !prev);
     }
     return;
-  }, [localVideoTrack]);
+  }, [isEnabledVideo, localVideoTrack]);
 
   // Leave the room and reset state
   const leave: LeaveHandler = useCallback(async () => {
