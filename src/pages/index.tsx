@@ -60,12 +60,14 @@ function Home() {
   const [invitation, setInvitation] = useState<string>('');
 
   useEffect(() => {
-    if (token && channel && localAudioTrack && localVideoTrack) {
+    if (token && localAudioTrack && localVideoTrack) {
       const invitationLink = encodeURI(
         window.location.origin + `?token=${token}&channelName=${channel}`
       );
 
       setInvitation(invitationLink);
+    } else {
+      setInvitation('');
     }
   }, [token, channel, localAudioTrack, localVideoTrack]);
 

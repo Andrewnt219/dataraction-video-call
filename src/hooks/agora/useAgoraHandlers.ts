@@ -220,6 +220,8 @@ export const useAgoraHandlers = (
       await client?.leave();
 
       setRemoteUsers([]);
+      setToken(null);
+      setChannel('');
       setRoomState('idle');
     } catch (error) {
       handleError(error);
