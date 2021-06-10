@@ -218,17 +218,20 @@ export const useAgoraHandlers = (
 
     try {
       await client?.leave();
-      await unpublishTracks('*');
 
       setRemoteUsers([]);
       setRoomState('idle');
     } catch (error) {
       handleError(error);
     }
-  }, [client, handleError, localAudioTrack, localVideoTrack, unpublishTracks]);
+  }, [client, handleError, localAudioTrack, localVideoTrack]);
 
   useEffect(() => {
     switch (roomState) {
+      case 'idle':
+        trigger('info', 'Not in a room');
+        break;
+
       case 'ready':
         createLocalVideoAndAudioTrack().then(() =>
           trigger('info', 'Initialize succesfully')
@@ -237,6 +240,10 @@ export const useAgoraHandlers = (
 
       case 'live':
         trigger('info', 'Join room successfully');
+        break;
+
+      case 'error':
+        trigger('danger', 'Something went wrong, please retry');
         break;
 
       default:
