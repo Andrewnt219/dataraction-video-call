@@ -72,7 +72,7 @@ function Home() {
               type="button"
               className="btn btn-primary btn-sm"
               onClick={() => {
-                publishTracks('*');
+                publishTracks();
               }}
             >
               Publish
