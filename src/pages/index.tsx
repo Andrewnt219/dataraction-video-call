@@ -2,13 +2,21 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import {
+  FaCopy,
   FaVideo,
   FaVideoSlash,
   FaVolumeMute,
   FaVolumeUp,
 } from 'react-icons/fa';
-import { Button, ButtonGroup } from 'reactstrap';
+import {
+  Button,
+  ButtonGroup,
+  Input,
+  InputGroup,
+  InputGroupAddon,
+} from 'reactstrap';
 import { AgoraProvider } from '_context/AgoraContext';
+import { useAlertContext } from '_context/AlertContext';
 import useAgora from '_hooks/agora/useAgora';
 import AgoraVideoPlayer from '../components/AgoraVideoPlayer';
 
@@ -45,6 +53,8 @@ function Home() {
     },
   } = agora;
 
+  const { trigger } = useAlertContext();
+
   const [invitation, setInvitation] = useState<string>('');
 
   useEffect(() => {
@@ -74,10 +84,27 @@ function Home() {
   return (
     <AgoraProvider value={agora}>
       <div>
-        <h1>{error?.message}</h1>
-        <a href={invitation} target="_blank" rel="noopener noreferrer">
-          {invitation}
-        </a>
+        {error?.message && trigger('danger', error.message)}
+
+        <InputGroup>
+          <InputGroupAddon addonType="prepend">
+            <Button
+              color="info"
+              onClick={() => {
+                navigator.clipboard.writeText(invitation);
+                trigger('info', 'Copied to clipboard');
+              }}
+            >
+              <FaCopy />
+            </Button>
+          </InputGroupAddon>
+          <Input
+            readOnly
+            aria-readonly
+            value={invitation}
+            onClick={(e) => e.currentTarget.select()}
+          />
+        </InputGroup>
 
         <ButtonGroup size="sm">
           <Button
