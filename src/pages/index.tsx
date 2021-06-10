@@ -38,7 +38,8 @@ function Home() {
       roomState,
       isEnabledAudio,
       isEnabledVideo,
-      toggleMute,
+      toggleAudio,
+      toggleVideo,
       channel,
       joinRoom,
     },
@@ -111,9 +112,7 @@ function Home() {
                   title={
                     isEnabledAudio ? 'Currently unmuted' : 'Currently muted'
                   }
-                  onClick={() => {
-                    toggleMute('audio');
-                  }}
+                  onClick={toggleAudio}
                 >
                   {isEnabledAudio ? (
                     <>
@@ -133,9 +132,7 @@ function Home() {
                   title={
                     isEnabledVideo ? 'Currently unmuted' : 'Currently muted'
                   }
-                  onClick={() => {
-                    toggleMute('video');
-                  }}
+                  onClick={toggleVideo}
                 >
                   {isEnabledVideo ? (
                     <>

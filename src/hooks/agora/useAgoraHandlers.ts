@@ -209,37 +209,25 @@ export const useAgoraHandlers = (
   );
 
   // Toggle mute for a media type
-  const toggleMute = useCallback(
-    (trackType: TrackType) => {
-      switch (trackType) {
-        case 'audio':
-          if (localAudioTrack !== undefined) {
-            const isEnabled = localAudioTrack.getMediaStreamTrack().enabled;
+  const toggleAudio = useCallback(() => {
+    if (localAudioTrack !== undefined) {
+      const isEnabled = localAudioTrack.getMediaStreamTrack().enabled;
 
-            localAudioTrack.getMediaStreamTrack().enabled = !isEnabled;
-            setIsEnabledAudio(!isEnabled);
-          }
-          return;
+      localAudioTrack.getMediaStreamTrack().enabled = !isEnabled;
+      setIsEnabledAudio(!isEnabled);
+    }
+    return;
+  }, [localAudioTrack]);
 
-        case 'video':
-          if (localVideoTrack !== undefined) {
-            const isMuted = !localVideoTrack.isPlaying;
+  const toggleVideo = useCallback(() => {
+    if (localVideoTrack !== undefined) {
+      const isMuted = !localVideoTrack.isPlaying;
+      localVideoTrack.setEnabled(isMuted ? true : false);
 
-            // NOTE this is weird, !isMutedVideo() doesn't work
-            localVideoTrack.setEnabled(isMuted ? true : false);
-
-            // NOTE cannot call isVideoMuted directly
-            // because there is a short delay of isPlaying state switch
-            setIsEnabledVideo(isMuted);
-          }
-          return;
-
-        default:
-          return;
-      }
-    },
-    [localAudioTrack, localVideoTrack]
-  );
+      setIsEnabledVideo(isMuted);
+    }
+    return;
+  }, [localVideoTrack]);
 
   // Leave the room and reset state
   const leave: LeaveHandler = useCallback(async () => {
@@ -313,7 +301,8 @@ export const useAgoraHandlers = (
     localAudioTrack,
     localVideoTrack,
     token,
-    toggleMute,
+    toggleAudio,
+    toggleVideo,
     error,
     joinRoom,
     remoteUsers,
