@@ -1,3 +1,5 @@
+import AgoraAudioSelect from 'components/AgoraAudioSelect.tsx/AgoraAudioSelect';
+import AgoraVideoSelect from 'components/AgoraVideoSelect/AgoraVideoSelect';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
@@ -11,9 +13,12 @@ import {
 import {
   Button,
   ButtonGroup,
+  Card,
+  CardBody,
   Input,
   InputGroup,
   InputGroupAddon,
+  UncontrolledCollapse,
 } from 'reactstrap';
 import { AgoraProvider } from '_context/AgoraContext';
 import { useAlertContext } from '_context/AlertContext';
@@ -33,8 +38,6 @@ function Home() {
 
   const agora = useAgora();
   const {
-    client,
-
     handlers: {
       localAudioTrack,
       localVideoTrack,
@@ -78,109 +81,130 @@ function Home() {
 
   return (
     <AgoraProvider value={agora}>
-      <div>
-        <ButtonGroup size="sm">
-          <Button
-            color="primary"
-            onClick={() => {
-              createRoom({ channelName: channel });
-            }}
-          >
-            Create
-          </Button>
+      <div className="grid gap-y-4  xl:grid-cols-4 xl:gap-x-4 xl:gap-y-0">
+        <div className="shadow p-4">
+          <h3>Controls</h3>
 
-          <Button color="danger" onClick={leave}>
-            Leave
-          </Button>
-        </ButtonGroup>
-
-        <InputGroup>
-          <InputGroupAddon addonType="prepend">
+          <ButtonGroup className="w-full mb-2">
             <Button
-              color="info"
+              color="primary"
               onClick={() => {
-                navigator.clipboard.writeText(invitation);
-                trigger('info', 'Copied to clipboard');
+                createRoom({ channelName: channel });
               }}
             >
-              <FaCopy />
+              Create
             </Button>
-          </InputGroupAddon>
 
-          <Input
-            readOnly
-            aria-readonly
-            value={invitation}
-            onClick={(e) => e.currentTarget.select()}
-          />
-        </InputGroup>
+            <Button color="danger" onClick={leave}>
+              Leave
+            </Button>
+          </ButtonGroup>
 
-        <div>
+          <InputGroup className="mb-4">
+            <InputGroupAddon addonType="prepend">
+              <Button
+                color="info"
+                onClick={() => {
+                  navigator.clipboard.writeText(invitation);
+                  trigger('info', 'Copied to clipboard');
+                }}
+              >
+                <FaCopy />
+              </Button>
+            </InputGroupAddon>
+
+            <Input
+              readOnly
+              aria-readonly
+              value={invitation}
+              onClick={(e) => e.currentTarget.select()}
+            />
+          </InputGroup>
+
+          <div>
+            <Button color="secondary" id="devices-settings" className="w-full">
+              Device settings
+            </Button>
+
+            <UncontrolledCollapse toggler="#devices-settings">
+              <Card>
+                <CardBody>
+                  <Button
+                    className="mb-2 w-full"
+                    color={isEnabledAudio ? 'primary' : 'danger'}
+                    title={
+                      isEnabledAudio ? 'Currently unmuted' : 'Currently muted'
+                    }
+                    onClick={toggleAudio}
+                  >
+                    {isEnabledAudio ? (
+                      <span>
+                        <span className="sr-only">Unmute audio</span>
+                        <FaVolumeUp />
+                      </span>
+                    ) : (
+                      <>
+                        <span className="sr-only">Mute audio</span>
+                        <FaVolumeMute />
+                      </>
+                    )}
+                  </Button>
+
+                  <AgoraAudioSelect hidePreview />
+
+                  <Button
+                    className="mb-2 mt-4 w-full"
+                    color={isEnabledVideo ? 'primary' : 'danger'}
+                    title={
+                      isEnabledVideo ? 'Currently unmuted' : 'Currently muted'
+                    }
+                    onClick={toggleVideo}
+                  >
+                    {isEnabledVideo ? (
+                      <span>
+                        <span className="sr-only">Unmute video</span>
+                        <FaVideo />
+                      </span>
+                    ) : (
+                      <>
+                        <span className="sr-only">Mute video</span>
+                        <FaVideoSlash />
+                      </>
+                    )}
+                  </Button>
+
+                  <AgoraVideoSelect hidePreview />
+                </CardBody>
+              </Card>
+            </UncontrolledCollapse>
+          </div>
+        </div>
+
+        <div className="col-span-3">
           {roomState === 'live' && (
-            <div>
-              <p>
-                {localVideoTrack && 'localTrack'}
-                {localVideoTrack ? `(${client?.uid})` : ''}
-              </p>
+            <div className="h-60 xl:h-full">
               <AgoraVideoPlayer
                 videoTrack={localVideoTrack}
                 audioTrack={localAudioTrack}
               />
 
-              <ButtonGroup size="sm">
-                <Button
-                  color={isEnabledAudio ? 'primary' : 'danger'}
-                  title={
-                    isEnabledAudio ? 'Currently unmuted' : 'Currently muted'
-                  }
-                  onClick={toggleAudio}
-                >
-                  {isEnabledAudio ? (
-                    <>
-                      <span className="sr-only">Unmute audio</span>
-                      <FaVolumeUp />
-                    </>
-                  ) : (
-                    <>
-                      <span className="sr-only">Mute audio</span>
-                      <FaVolumeMute />
-                    </>
-                  )}
-                </Button>
-
-                <Button
-                  color={isEnabledVideo ? 'primary' : 'danger'}
-                  title={
-                    isEnabledVideo ? 'Currently unmuted' : 'Currently muted'
-                  }
-                  onClick={toggleVideo}
-                >
-                  {isEnabledVideo ? (
-                    <>
-                      <span className="sr-only">Unmute video</span>
-                      <FaVideo />
-                    </>
-                  ) : (
-                    <>
-                      <span className="sr-only">Mute video</span>
-                      <FaVideoSlash />
-                    </>
-                  )}
-                </Button>
-              </ButtonGroup>
+              <p>You</p>
             </div>
           )}
-
-          {remoteUsers.map((user) => (
-            <div key={user.uid}>
-              <p>{`remoteVideo(${user.uid})`}</p>
-              <AgoraVideoPlayer
-                videoTrack={user.videoTrack}
-                audioTrack={user.audioTrack}
-              />
-            </div>
-          ))}
         </div>
+      </div>
+
+      <div className="mt-12 grid md:grid-cols-2  gap-4 xl:grid-cols-4">
+        {remoteUsers.map((user) => (
+          <div className="h-60 flex flex-col w-full" key={user.uid}>
+            <AgoraVideoPlayer
+              videoTrack={user.videoTrack}
+              audioTrack={user.audioTrack}
+            />
+
+            <div>{`User: (${user.uid})`}</div>
+          </div>
+        ))}
       </div>
       {roomState === 'ready' && <AgoraDeviceTestModal />}
     </AgoraProvider>

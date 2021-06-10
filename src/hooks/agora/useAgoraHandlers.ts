@@ -51,15 +51,6 @@ export const useAgoraHandlers = (
     [trigger]
   );
 
-  const isLocalTracksAvailable = useCallback(() => {
-    if (!localAudioTrack || !localVideoTrack) {
-      handleError(new Error('Need audio and  video permission'));
-      return false;
-    }
-
-    return true;
-  }, [handleError, localAudioTrack, localVideoTrack]);
-
   // Ask for both video and microphone permission
   const createLocalVideoAndAudioTrack = useCallback(
     async (config?: TrackConfig): Promise<void> => {
@@ -231,13 +222,14 @@ export const useAgoraHandlers = (
 
     try {
       await client?.leave();
+      await unpublishTracks('*');
 
       setRemoteUsers([]);
       setRoomState('idle');
     } catch (error) {
       handleError(error);
     }
-  }, [client, handleError, localAudioTrack, localVideoTrack]);
+  }, [client, handleError, localAudioTrack, localVideoTrack, unpublishTracks]);
 
   useEffect(() => {
     if (roomState === 'ready') {

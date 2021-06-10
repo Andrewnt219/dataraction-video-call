@@ -3,7 +3,7 @@ import { useAgoraContext } from '_context/AgoraContext';
 import { isMicrophoneTrack } from '_lib/agora/agora-utils';
 import { useAgoraDevice } from '_lib/agora/useAgoraDevice';
 
-export const useAgoraAudioSelect = () => {
+export const useAgoraAudioSelect = (hidePreview = false) => {
   const agoraContext = useAgoraContext();
 
   const audioInput = useAgoraDevice({
@@ -25,14 +25,14 @@ export const useAgoraAudioSelect = () => {
 
   useEffect(() => {
     const track = audioInput.track;
-    if (!track || !isMicrophoneTrack(track)) return;
+    if (hidePreview || !track || !isMicrophoneTrack(track)) return;
 
     track.play();
 
     return () => {
       track.stop();
     };
-  }, [audioInput.track]);
+  }, [audioInput.track, hidePreview]);
 
   return { audioInput, volumeLevel, agoraContext };
 };

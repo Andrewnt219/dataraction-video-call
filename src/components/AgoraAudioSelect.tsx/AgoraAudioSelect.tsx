@@ -10,8 +10,11 @@ import {
 import { useAgoraContext } from '_context/AgoraContext';
 import { useAgoraAudioSelect } from './useAgoraAudioSelect';
 
-const AgoraAudioSelect = () => {
-  const { audioInput, volumeLevel } = useAgoraAudioSelect();
+type Props = {
+  hidePreview?: boolean;
+};
+const AgoraAudioSelect = ({ hidePreview }: Props) => {
+  const { audioInput, volumeLevel } = useAgoraAudioSelect(hidePreview);
   const {
     handlers: { localAudioTrack },
   } = useAgoraContext();
@@ -24,7 +27,7 @@ const AgoraAudioSelect = () => {
   };
 
   return (
-    <>
+    <div>
       <InputGroup>
         <InputGroupAddon addonType="prepend">
           <InputGroupText>
@@ -42,7 +45,7 @@ const AgoraAudioSelect = () => {
       </InputGroup>
 
       <Progress className="mt-2" color="success" value={volumeLevel * 100} />
-    </>
+    </div>
   );
 };
 

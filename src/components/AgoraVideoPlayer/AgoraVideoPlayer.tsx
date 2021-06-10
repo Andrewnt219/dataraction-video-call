@@ -13,10 +13,10 @@ const AgoraVideoPlayer = ({ audioTrack, videoTrack, className }: Props) => {
   const videoElementRef = useAgoraVideoPlayer(audioTrack, videoTrack);
 
   return (
-    <div className={clsx('bg-gray-900 mt-2', className)}>
+    <div className={clsx('bg-gray-900 h-full', className)}>
       <div
         ref={videoElementRef}
-        className="w-full h-60 max-w-xs mx-auto bg-black"
+        className="w-full h-full max-w-xs mx-auto bg-black"
       ></div>
     </div>
   );

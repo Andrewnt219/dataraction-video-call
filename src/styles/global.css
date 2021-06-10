@@ -1,2 +1,6 @@
 @tailwind components;
 @tailwind utilities;
+
+#__next {
+  @apply max-w-7xl mx-auto p-4 mt-10;
+}

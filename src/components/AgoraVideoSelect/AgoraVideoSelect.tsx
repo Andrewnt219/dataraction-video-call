@@ -4,7 +4,10 @@ import { FaCamera } from 'react-icons/fa';
 import { Input, InputGroup, InputGroupAddon, InputGroupText } from 'reactstrap';
 import { useAgoraVideoSelect } from './useAgoraVideoSelect';
 
-const AgoraVideoSelect = () => {
+type Props = {
+  hidePreview?: boolean;
+};
+const AgoraVideoSelect = ({ hidePreview = false }: Props) => {
   const { agoraContext, videoInput } = useAgoraVideoSelect();
 
   const handleVideoChange: ChangeEventHandler<HTMLInputElement> = (e) => {
@@ -15,7 +18,7 @@ const AgoraVideoSelect = () => {
   };
 
   return (
-    <>
+    <div>
       <InputGroup>
         <InputGroupAddon addonType="prepend">
           <InputGroupText>
@@ -32,8 +35,15 @@ const AgoraVideoSelect = () => {
         </Input>
       </InputGroup>
 
-      <AgoraVideoPlayer audioTrack={undefined} videoTrack={videoInput.track} />
-    </>
+      {!hidePreview && (
+        <div className="h-60 w-full">
+          <AgoraVideoPlayer
+            audioTrack={undefined}
+            videoTrack={videoInput.track}
+          />
+        </div>
+      )}
+    </div>
   );
 };
 
