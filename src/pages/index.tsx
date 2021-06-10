@@ -18,7 +18,7 @@ import {
 import { AgoraProvider } from '_context/AgoraContext';
 import { useAlertContext } from '_context/AlertContext';
 import useAgora from '_hooks/agora/useAgora';
-import AgoraVideoPlayer from '../components/AgoraVideoPlayer';
+import AgoraVideoPlayer from '../components/AgoraVideoPlayer/AgoraVideoPlayer';
 
 const AgoraDeviceTestModal = dynamic(
   () => import('components/AgoraDeviceTestModal'),
