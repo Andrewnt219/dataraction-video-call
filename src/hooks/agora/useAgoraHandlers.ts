@@ -255,10 +255,10 @@ export const useAgoraHandlers = (
   }, [client, localAudioTrack, localVideoTrack]);
 
   useEffect(() => {
-    if (agoraRtc) {
+    if (roomState === 'ready') {
       createLocalVideoAndAudioTrack();
     }
-  }, [agoraRtc, createLocalVideoAndAudioTrack]);
+  }, [roomState, createLocalVideoAndAudioTrack]);
 
   // Set up listeners for agora's events
   useEffect(() => {
