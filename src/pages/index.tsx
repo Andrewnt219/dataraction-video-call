@@ -1,5 +1,12 @@
 import dynamic from 'next/dynamic';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
+import {
+  FaVideo,
+  FaVideoSlash,
+  FaVolumeMute,
+  FaVolumeUp,
+} from 'react-icons/fa';
+import { Button, ButtonGroup } from 'reactstrap';
 import { AgoraProvider } from '_context/AgoraContext';
 import useAgora from '_hooks/agora/useAgora';
 import AgoraVideoPlayer from '../components/AgoraVideoPlayer';
@@ -31,12 +38,14 @@ function Home() {
     },
   } = useAgora();
 
-  const invitation = useRef<string>();
+  const [invitation, setInvitation] = useState<string>('');
 
   useEffect(() => {
     if (token && channel) {
-      invitation.current =
+      const invitationLink =
         window.location.origin + `?token=${token}&channelName=${channel}`;
+
+      setInvitation(invitationLink);
     }
   }, [token, channel]);
 
@@ -44,77 +53,30 @@ function Home() {
     <AgoraProvider
       value={{ agoraRtc, client, localAudioTrack, localVideoTrack }}
     >
-      <div className="call">
+      <div>
         <h1>{error?.message}</h1>
-        <h1>{localAudioTrack?.getVolumeLevel()}</h1>
-        <form className="call-form">
-          <a
-            href={invitation.current}
-            target="_blank"
-            rel="noopener noreferrer"
+        <a href={invitation} target="_blank" rel="noopener noreferrer">
+          {invitation}
+        </a>
+
+        <ButtonGroup size="sm">
+          <Button
+            color="primary"
+            onClick={() => {
+              createRoom({ channelName: channel });
+            }}
           >
-            {invitation.current}
-          </a>
+            Create
+          </Button>
 
-          <div className="button-group">
-            <button
-              id="create"
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => {
-                createRoom({ channelName: channel });
-              }}
-            >
-              Create
-            </button>
-            <button
-              id="join"
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => {
-                publishTracks();
-              }}
-            >
-              Publish
-            </button>
+          <Button color="danger" onClick={leave}>
+            Leave
+          </Button>
+        </ButtonGroup>
 
-            <button
-              id="join"
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => {
-                toggleMute('audio');
-              }}
-            >
-              {isEnabledAudio ? 'Mute audio' : 'UnMute audio'}
-            </button>
-
-            <button
-              id="join"
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => {
-                toggleMute('video');
-              }}
-            >
-              {isEnabledVideo ? 'Mute video' : 'UnMute video'}
-            </button>
-
-            <button
-              id="leave"
-              type="button"
-              className="btn btn-primary btn-sm"
-              onClick={() => {
-                leave();
-              }}
-            >
-              Leave
-            </button>
-          </div>
-        </form>
-        <div className="player-container">
-          <div className="local-player-wrapper">
-            <p className="local-player-text">
+        <div>
+          <div>
+            <p>
               {localVideoTrack && 'localTrack'}
               {localVideoTrack ? `(${client?.uid})` : ''}
             </p>
@@ -122,10 +84,60 @@ function Home() {
               videoTrack={localVideoTrack}
               audioTrack={localAudioTrack}
             />
+
+            <ButtonGroup size="sm">
+              <Button
+                color="primary"
+                onClick={() => {
+                  publishTracks();
+                }}
+              >
+                Publish
+              </Button>
+
+              <Button
+                color={isEnabledAudio ? 'danger' : 'primary'}
+                onClick={() => {
+                  toggleMute('audio');
+                }}
+              >
+                {isEnabledAudio ? (
+                  <>
+                    <span className="sr-only">Mute audio</span>
+                    <FaVolumeMute />
+                  </>
+                ) : (
+                  <>
+                    <span className="sr-only">Unmute audio</span>
+                    <FaVolumeUp />
+                  </>
+                )}
+              </Button>
+
+              <Button
+                color={isEnabledVideo ? 'danger' : 'primary'}
+                onClick={() => {
+                  toggleMute('video');
+                }}
+              >
+                {isEnabledVideo ? (
+                  <>
+                    <span className="sr-only">Mute video</span>
+                    <FaVideoSlash />
+                  </>
+                ) : (
+                  <>
+                    <span className="sr-only">Unmute video</span>
+                    <FaVideo />
+                  </>
+                )}
+              </Button>
+            </ButtonGroup>
           </div>
+
           {remoteUsers.map((user) => (
-            <div className="remote-player-wrapper" key={user.uid}>
-              <p className="remote-player-text">{`remoteVideo(${user.uid})`}</p>
+            <div key={user.uid}>
+              <p>{`remoteVideo(${user.uid})`}</p>
               <AgoraVideoPlayer
                 videoTrack={user.videoTrack}
                 audioTrack={user.audioTrack}
