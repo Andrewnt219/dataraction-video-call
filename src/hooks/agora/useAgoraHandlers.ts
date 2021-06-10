@@ -4,13 +4,12 @@ import type {
   IAgoraRTCClient,
   IAgoraRTCRemoteUser,
   ICameraVideoTrack,
-  ILocalTrack,
   IMicrophoneAudioTrack,
   MicrophoneAudioTrackInitConfig,
 } from 'agora-rtc-sdk-ng';
 import axios from 'axios';
 import { NEXT_PUBLIC_AGORA_APP_ID } from 'constants/agora';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ErrorMessage } from '_common';
 import type * as ApiAgoraGetRoomToken from '_pages/api/agora/getRoomToken';
 import { getErrorMessage } from '_utils/convert-utils';
@@ -39,193 +38,196 @@ export const useAgoraHandlers = (
   const [error, setError] = useState<null | ErrorMessage>(null);
 
   // Ask for both video and microphone permission
-  async function createLocalVideoAndAudioTrack(
-    config?: TrackConfig
-  ): Promise<[IMicrophoneAudioTrack, ICameraVideoTrack]> {
-    if (!agoraRtc) throw new Error('Agora service is not available');
+  const createLocalVideoAndAudioTrack = useCallback(
+    async (
+      config?: TrackConfig
+    ): Promise<[IMicrophoneAudioTrack, ICameraVideoTrack]> => {
+      if (!agoraRtc) throw new Error('Agora service is not available');
 
-    const [audioTrack, cameraTrack] =
-      await agoraRtc.createMicrophoneAndCameraTracks(
-        config?.audio,
-        config?.video
-      );
+      const [audioTrack, cameraTrack] =
+        await agoraRtc.createMicrophoneAndCameraTracks(
+          config?.audio,
+          config?.video
+        );
 
-    setLocalVideoTrack(cameraTrack);
-    setLocalAudioTrack(audioTrack);
+      setLocalVideoTrack(cameraTrack);
+      setLocalAudioTrack(audioTrack);
 
-    return [audioTrack, cameraTrack];
-  }
+      return [audioTrack, cameraTrack];
+    },
+    [agoraRtc]
+  );
 
   // Ask for video permission
-  async function createLocalVideoTrack(
-    videoConfig?: CameraVideoTrackInitConfig
-  ): Promise<ICameraVideoTrack> {
-    if (!agoraRtc) throw new Error('Agora service is not available');
-    if (localVideoTrack) return localVideoTrack;
+  const createLocalVideoTrack = useCallback(
+    async (
+      videoConfig?: CameraVideoTrackInitConfig
+    ): Promise<ICameraVideoTrack> => {
+      if (!agoraRtc) throw new Error('Agora service is not available');
+      if (localVideoTrack) return localVideoTrack;
 
-    const cameraTrack = await agoraRtc.createCameraVideoTrack(videoConfig);
-    setLocalVideoTrack(cameraTrack);
+      const cameraTrack = await agoraRtc.createCameraVideoTrack(videoConfig);
+      setLocalVideoTrack(cameraTrack);
 
-    return cameraTrack;
-  }
+      return cameraTrack;
+    },
+    [agoraRtc, localVideoTrack]
+  );
 
   // Ask for local microphone permission
-  async function createLocalAudioTrack(
-    audioConfig?: MicrophoneAudioTrackInitConfig
-  ): Promise<IMicrophoneAudioTrack> {
-    if (!agoraRtc) throw new Error('Agora service is not available');
-    if (localAudioTrack) return localAudioTrack;
+  const createLocalAudioTrack = useCallback(
+    async (
+      audioConfig?: MicrophoneAudioTrackInitConfig
+    ): Promise<IMicrophoneAudioTrack> => {
+      if (!agoraRtc) throw new Error('Agora service is not available');
+      if (localAudioTrack) return localAudioTrack;
 
-    const audioTrack = await agoraRtc.createMicrophoneAudioTrack(audioConfig);
-    setLocalAudioTrack(audioTrack);
+      const audioTrack = await agoraRtc.createMicrophoneAudioTrack(audioConfig);
+      setLocalAudioTrack(audioTrack);
 
-    return audioTrack;
-  }
-
-  // Create a new room with token
-  const createRoom: CreateRoomHandler = async (params) => {
-    if (!client) return;
-
-    try {
-      const {
-        data: { data },
-      } = await axios.get<ApiAgoraGetRoomToken.Data>(
-        '/api/agora/getRoomToken',
-        {
-          params,
-        }
-      );
-
-      const roomOptions: RoomOptions = {
-        channelName: data.channelName,
-        token: data.token,
-        uid: params.userUid?.toString(),
-      };
-      joinRoom(roomOptions);
-      createLocalVideoAndAudioTrack();
-
-      setToken(data.token);
-      setChannel(data.channelName);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    }
-  };
+      return audioTrack;
+    },
+    [agoraRtc, localAudioTrack]
+  );
 
   // join an existing room
-  const joinRoom: JoinRoom = async ({ channelName, token, uid }) => {
-    createLocalVideoAndAudioTrack();
-    await client?.join(NEXT_PUBLIC_AGORA_APP_ID, channelName, token, uid);
-  };
+  const joinRoom: JoinRoom = useCallback(
+    async ({ channelName, token, uid }) => {
+      await client?.join(NEXT_PUBLIC_AGORA_APP_ID, channelName, token, uid);
+    },
+    [client]
+  );
+
+  // Create a new room with token
+  const createRoom: CreateRoomHandler = useCallback(
+    async (params) => {
+      if (!client) return;
+
+      try {
+        const {
+          data: { data },
+        } = await axios.get<ApiAgoraGetRoomToken.Data>(
+          '/api/agora/getRoomToken',
+          {
+            params,
+          }
+        );
+
+        const roomOptions: RoomOptions = {
+          channelName: data.channelName,
+          token: data.token,
+          uid: params.userUid?.toString(),
+        };
+        joinRoom(roomOptions);
+
+        setToken(data.token);
+        setChannel(data.channelName);
+      } catch (err) {
+        setError(getErrorMessage(err));
+      }
+    },
+    [client, joinRoom]
+  );
 
   // Publish a local track
-  const publishTracks: PublishTracksHandler = async (
-    trackType,
-    config = {}
-  ) => {
+  const publishTracks: PublishTracksHandler = useCallback(async () => {
     if (!client) return;
 
-    let tracks: ILocalTrack | ILocalTrack[];
-    try {
-      switch (trackType) {
-        case '*':
-          tracks = await createLocalVideoAndAudioTrack(config);
-          break;
-
-        case 'audio':
-          tracks = await createLocalAudioTrack(config.audio);
-          break;
-
-        case 'video':
-          tracks = await createLocalVideoTrack(config.video);
-          break;
-
-        default:
-          throw new Error('Invalid track type');
-      }
-
-      client.publish(tracks);
-      // setJoinState('joined');
-    } catch (error) {
-      console.log({ error });
+    if (localAudioTrack) {
+      await client.publish(localAudioTrack).catch(() => {
+        throw new Error('Fail to publish audio track');
+      });
     }
-  };
+
+    if (localVideoTrack) {
+      await client.publish(localVideoTrack).catch(() => {
+        throw new Error('Fail to publish audio track');
+      });
+    }
+  }, [client, localAudioTrack, localVideoTrack]);
 
   // Unpublish a local track
-  const unpublishTracks: UnpublishTracksHandler = async (trackType) => {
-    if (!client) return;
+  const unpublishTracks: UnpublishTracksHandler = useCallback(
+    async (trackType) => {
+      if (!client) return;
 
-    try {
+      try {
+        switch (trackType) {
+          case '*':
+            if (localAudioTrack) {
+              await client.unpublish(localAudioTrack);
+              setLocalAudioTrack(undefined);
+            }
+
+            if (localVideoTrack) {
+              await client.unpublish(localVideoTrack);
+              setLocalVideoTrack(undefined);
+            }
+
+            return;
+
+          case 'audio':
+            if (localAudioTrack) {
+              await client.unpublish(localAudioTrack);
+              setLocalAudioTrack(undefined);
+            }
+
+            return;
+
+          case 'video':
+            if (localVideoTrack) {
+              await client.unpublish(localVideoTrack);
+              setLocalVideoTrack(undefined);
+            }
+
+            return;
+
+          default:
+            throw new Error('Invalid track type');
+        }
+        // setJoinState('joined');
+      } catch (error) {
+        console.log({ error });
+      }
+    },
+    [client, localAudioTrack, localVideoTrack]
+  );
+
+  // Toggle mute for a media type
+  const toggleMute = useCallback(
+    (trackType: TrackType) => {
       switch (trackType) {
-        case '*':
-          if (localAudioTrack) {
-            await client.unpublish(localAudioTrack);
-            setLocalAudioTrack(undefined);
-          }
-
-          if (localVideoTrack) {
-            await client.unpublish(localVideoTrack);
-            setLocalVideoTrack(undefined);
-          }
-
-          return;
-
         case 'audio':
-          if (localAudioTrack) {
-            await client.unpublish(localAudioTrack);
-            setLocalAudioTrack(undefined);
-          }
+          if (localAudioTrack !== undefined) {
+            const isEnabled = localAudioTrack.getMediaStreamTrack().enabled;
 
+            localAudioTrack.getMediaStreamTrack().enabled = !isEnabled;
+            setIsEnabledAudio(!isEnabled);
+          }
           return;
 
         case 'video':
-          if (localVideoTrack) {
-            await client.unpublish(localVideoTrack);
-            setLocalVideoTrack(undefined);
-          }
+          if (localVideoTrack !== undefined) {
+            const isMuted = !localVideoTrack.isPlaying;
 
+            // NOTE this is weird, !isMutedVideo() doesn't work
+            localVideoTrack.setEnabled(isMuted ? true : false);
+
+            // NOTE cannot call isVideoMuted directly
+            // because there is a short delay of isPlaying state switch
+            setIsEnabledVideo(isMuted);
+          }
           return;
 
         default:
-          throw new Error('Invalid track type');
+          return;
       }
-      // setJoinState('joined');
-    } catch (error) {
-      console.log({ error });
-    }
-  };
-
-  // Toggle mute for a media type
-  const toggleMute = (trackType: TrackType) => {
-    switch (trackType) {
-      case 'audio':
-        if (localAudioTrack !== undefined) {
-          const isEnabled = localAudioTrack.getMediaStreamTrack().enabled;
-
-          localAudioTrack.getMediaStreamTrack().enabled = !isEnabled;
-          setIsEnabledAudio(!isEnabled);
-        }
-        return;
-
-      case 'video':
-        if (localVideoTrack !== undefined) {
-          const isMuted = !localVideoTrack.isPlaying;
-
-          // NOTE this is weird, !isMutedVideo() doesn't work
-          localVideoTrack.setEnabled(isMuted ? true : false);
-
-          // NOTE cannot call isVideoMuted directly
-          // because there is a short delay of isPlaying state switch
-          setIsEnabledVideo(isMuted);
-        }
-        return;
-
-      default:
-        return;
-    }
-  };
+    },
+    [localAudioTrack, localVideoTrack]
+  );
 
   // Leave the room and reset state
-  const leave: LeaveHandler = async () => {
+  const leave: LeaveHandler = useCallback(async () => {
     if (localAudioTrack) {
       localAudioTrack.stop();
       localAudioTrack.close();
@@ -239,7 +241,13 @@ export const useAgoraHandlers = (
 
     // setJoinState('idle');
     await client?.leave();
-  };
+  }, [client, localAudioTrack, localVideoTrack]);
+
+  useEffect(() => {
+    if (agoraRtc) {
+      createLocalVideoAndAudioTrack();
+    }
+  }, [agoraRtc, createLocalVideoAndAudioTrack]);
 
   // Set up listeners for agora's events
   useEffect(() => {
@@ -309,10 +317,7 @@ type TrackConfig = {
   video?: CameraVideoTrackInitConfig;
 };
 type CreateRoomHandler = (params: ApiAgoraGetRoomToken.Query) => Promise<void>;
-type PublishTracksHandler = (
-  track: TrackType,
-  config?: TrackConfig
-) => Promise<void>;
+type PublishTracksHandler = () => Promise<void>;
 type UnpublishTracksHandler = (track: TrackType) => Promise<void>;
 type JoinRoom = (options: RoomOptions) => Promise<void>;
 type LeaveHandler = () => Promise<void>;
