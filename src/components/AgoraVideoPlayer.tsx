@@ -42,11 +42,10 @@ const AgoraVideoPlayer = ({ audioTrack, videoTrack }: VideoPlayerProps) => {
   }, [audioTrack]);
 
   return (
-    <div>
+    <div className="bg-gray-900">
       <div
         ref={videoElementRef}
-        className="video-player"
-        style={{ width: '320px', height: '240px' }}
+        className="w-full h-60 max-w-xs mx-auto bg-black"
       ></div>
     </div>
   );
