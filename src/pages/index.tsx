@@ -18,9 +18,10 @@ const AgoraDeviceTestModal = dynamic(
   }
 );
 function Home() {
+  const agora = useAgora();
   const {
     client,
-    agoraRtc,
+
     handlers: {
       localAudioTrack,
       localVideoTrack,
@@ -29,14 +30,13 @@ function Home() {
       remoteUsers,
       token,
       error,
-      joinRoom,
-      publishTracks,
+      roomState,
       isEnabledAudio,
       isEnabledVideo,
       toggleMute,
       channel,
     },
-  } = useAgora();
+  } = agora;
 
   const [invitation, setInvitation] = useState<string>('');
 
@@ -50,9 +50,7 @@ function Home() {
   }, [token, channel]);
 
   return (
-    <AgoraProvider
-      value={{ agoraRtc, client, localAudioTrack, localVideoTrack }}
-    >
+    <AgoraProvider value={agora}>
       <div>
         <h1>{error?.message}</h1>
         <a href={invitation} target="_blank" rel="noopener noreferrer">
@@ -86,15 +84,6 @@ function Home() {
             />
 
             <ButtonGroup size="sm">
-              <Button
-                color="primary"
-                onClick={() => {
-                  publishTracks();
-                }}
-              >
-                Publish
-              </Button>
-
               <Button
                 color={isEnabledAudio ? 'danger' : 'primary'}
                 onClick={() => {
@@ -146,7 +135,7 @@ function Home() {
           ))}
         </div>
       </div>
-      <AgoraDeviceTestModal />
+      {roomState === 'ready' && <AgoraDeviceTestModal />}
     </AgoraProvider>
   );
 }

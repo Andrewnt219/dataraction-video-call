@@ -1,16 +1,6 @@
-import type {
-  IAgoraRTC,
-  IAgoraRTCClient,
-  ICameraVideoTrack,
-  IMicrophoneAudioTrack,
-} from 'agora-rtc-sdk-ng';
 import * as React from 'react';
-type Context = {
-  client: IAgoraRTCClient | null;
-  agoraRtc: IAgoraRTC | null;
-  localAudioTrack: IMicrophoneAudioTrack | undefined;
-  localVideoTrack: ICameraVideoTrack | undefined;
-};
+import useAgora from '_hooks/agora/useAgora';
+type Context = ReturnType<typeof useAgora>;
 const Context = React.createContext<Context | undefined>(undefined);
 
 type ProviderProps = {
