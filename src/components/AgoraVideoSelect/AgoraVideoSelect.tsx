@@ -36,7 +36,7 @@ const AgoraVideoSelect = ({ hidePreview = false }: Props) => {
       </InputGroup>
 
       {!hidePreview && (
-        <div className="h-60 w-full">
+        <div className="h-60 w-full mt-2">
           <AgoraVideoPlayer
             audioTrack={undefined}
             videoTrack={videoInput.track}

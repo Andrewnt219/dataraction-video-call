@@ -232,10 +232,21 @@ export const useAgoraHandlers = (
   }, [client, handleError, localAudioTrack, localVideoTrack, unpublishTracks]);
 
   useEffect(() => {
-    if (roomState === 'ready') {
-      createLocalVideoAndAudioTrack();
+    switch (roomState) {
+      case 'ready':
+        createLocalVideoAndAudioTrack().then(() =>
+          trigger('info', 'Initialize succesfully')
+        );
+        break;
+
+      case 'live':
+        trigger('info', 'Join room successfully');
+        break;
+
+      default:
+        break;
     }
-  }, [roomState, createLocalVideoAndAudioTrack]);
+  }, [roomState, createLocalVideoAndAudioTrack, trigger]);
 
   // Set up listeners for agora's events
   useEffect(() => {
