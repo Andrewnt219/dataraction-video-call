@@ -42,7 +42,6 @@ function Home() {
       createRoom,
       remoteUsers,
       token,
-      error,
       roomState,
       isEnabledAudio,
       isEnabledVideo,
@@ -58,54 +57,28 @@ function Home() {
   const [invitation, setInvitation] = useState<string>('');
 
   useEffect(() => {
-    if (token && channel) {
+    if (token && channel && localAudioTrack && localVideoTrack) {
       const invitationLink = encodeURI(
         window.location.origin + `?token=${token}&channelName=${channel}`
       );
 
       setInvitation(invitationLink);
     }
-  }, [token, channel]);
+  }, [token, channel, localAudioTrack, localVideoTrack]);
 
   useEffect(() => {
-    if (
-      tokenQuery &&
-      channelNameQuery &&
-      typeof tokenQuery === 'string' &&
-      typeof channelNameQuery === 'string'
-    ) {
-      joinRoom({
-        token: decodeURIComponent(tokenQuery),
-        channelName: decodeURIComponent(channelNameQuery),
-      });
-    }
+    if (typeof tokenQuery !== 'string' || typeof channelNameQuery !== 'string')
+      return;
+
+    joinRoom({
+      token: decodeURIComponent(tokenQuery),
+      channelName: decodeURIComponent(channelNameQuery),
+    });
   }, [channelNameQuery, joinRoom, tokenQuery]);
 
   return (
     <AgoraProvider value={agora}>
       <div>
-        {error?.message && trigger('danger', error.message)}
-
-        <InputGroup>
-          <InputGroupAddon addonType="prepend">
-            <Button
-              color="info"
-              onClick={() => {
-                navigator.clipboard.writeText(invitation);
-                trigger('info', 'Copied to clipboard');
-              }}
-            >
-              <FaCopy />
-            </Button>
-          </InputGroupAddon>
-          <Input
-            readOnly
-            aria-readonly
-            value={invitation}
-            onClick={(e) => e.currentTarget.select()}
-          />
-        </InputGroup>
-
         <ButtonGroup size="sm">
           <Button
             color="primary"
@@ -120,6 +93,27 @@ function Home() {
             Leave
           </Button>
         </ButtonGroup>
+
+        <InputGroup>
+          <InputGroupAddon addonType="prepend">
+            <Button
+              color="info"
+              onClick={() => {
+                navigator.clipboard.writeText(invitation);
+                trigger('info', 'Copied to clipboard');
+              }}
+            >
+              <FaCopy />
+            </Button>
+          </InputGroupAddon>
+
+          <Input
+            readOnly
+            aria-readonly
+            value={invitation}
+            onClick={(e) => e.currentTarget.select()}
+          />
+        </InputGroup>
 
         <div>
           {roomState === 'live' && (

@@ -10,7 +10,7 @@ import type {
 import axios from 'axios';
 import { NEXT_PUBLIC_AGORA_APP_ID } from 'constants/agora';
 import { useCallback, useEffect, useState } from 'react';
-import type { ErrorMessage } from '_common';
+import { useAlertContext } from '_context/AlertContext';
 import type * as ApiAgoraGetRoomToken from '_pages/api/agora/getRoomToken';
 import { getErrorMessage } from '_utils/convert-utils';
 
@@ -18,6 +18,8 @@ export const useAgoraHandlers = (
   client: IAgoraRTCClient | null,
   agoraRtc: IAgoraRTC | null
 ) => {
+  const { trigger } = useAlertContext();
+
   const [roomState, setRoomState] = useState<RoomState>('idle');
 
   const [localVideoTrack, setLocalVideoTrack] = useState<ICameraVideoTrack>();
@@ -37,59 +39,46 @@ export const useAgoraHandlers = (
   const [channel, setChannel] = useState<string>('');
   const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([]);
 
-  const [error, setError] = useState<null | ErrorMessage>(null);
+  const handleError = useCallback(
+    (err: Error) => {
+      let message = '';
+
+      if (err instanceof Error) message = err.message;
+      else message = getErrorMessage(err).message;
+
+      trigger('danger', message);
+    },
+    [trigger]
+  );
+
+  const isLocalTracksAvailable = useCallback(() => {
+    if (!localAudioTrack || !localVideoTrack) {
+      handleError(new Error('Need audio and  video permission'));
+      return false;
+    }
+
+    return true;
+  }, [handleError, localAudioTrack, localVideoTrack]);
 
   // Ask for both video and microphone permission
   const createLocalVideoAndAudioTrack = useCallback(
-    async (
-      config?: TrackConfig
-    ): Promise<[IMicrophoneAudioTrack, ICameraVideoTrack]> => {
+    async (config?: TrackConfig): Promise<void> => {
       if (!agoraRtc) throw new Error('Agora service is not available');
 
-      const [audioTrack, cameraTrack] =
-        await agoraRtc.createMicrophoneAndCameraTracks(
-          config?.audio,
-          config?.video
-        );
+      try {
+        const [audioTrack, cameraTrack] =
+          await agoraRtc.createMicrophoneAndCameraTracks(
+            config?.audio,
+            config?.video
+          );
 
-      setLocalVideoTrack(cameraTrack);
-      setLocalAudioTrack(audioTrack);
-
-      return [audioTrack, cameraTrack];
+        setLocalVideoTrack(cameraTrack);
+        setLocalAudioTrack(audioTrack);
+      } catch (error) {
+        handleError(error);
+      }
     },
-    [agoraRtc]
-  );
-
-  // Ask for video permission
-  const createLocalVideoTrack = useCallback(
-    async (
-      videoConfig?: CameraVideoTrackInitConfig
-    ): Promise<ICameraVideoTrack> => {
-      if (!agoraRtc) throw new Error('Agora service is not available');
-      if (localVideoTrack) return localVideoTrack;
-
-      const cameraTrack = await agoraRtc.createCameraVideoTrack(videoConfig);
-      setLocalVideoTrack(cameraTrack);
-
-      return cameraTrack;
-    },
-    [agoraRtc, localVideoTrack]
-  );
-
-  // Ask for local microphone permission
-  const createLocalAudioTrack = useCallback(
-    async (
-      audioConfig?: MicrophoneAudioTrackInitConfig
-    ): Promise<IMicrophoneAudioTrack> => {
-      if (!agoraRtc) throw new Error('Agora service is not available');
-      if (localAudioTrack) return localAudioTrack;
-
-      const audioTrack = await agoraRtc.createMicrophoneAudioTrack(audioConfig);
-      setLocalAudioTrack(audioTrack);
-
-      return audioTrack;
-    },
-    [agoraRtc, localAudioTrack]
+    [agoraRtc, handleError]
   );
 
   // join an existing room
@@ -100,19 +89,22 @@ export const useAgoraHandlers = (
       // In case user has left room before
       await createLocalVideoAndAudioTrack();
 
-      await client?.join(NEXT_PUBLIC_AGORA_APP_ID, channelName, token, uid);
+      await client
+        ?.join(NEXT_PUBLIC_AGORA_APP_ID, channelName, token, uid)
+        .catch(handleError);
 
       setRoomState('ready');
       setChannel(channelName);
       setToken(token);
     },
-    [agoraRtc, client, createLocalVideoAndAudioTrack]
+    [agoraRtc, client, createLocalVideoAndAudioTrack, handleError]
   );
 
   // Create a new room with token
   const createRoom: CreateRoomHandler = useCallback(
     async (params) => {
       if (!client) return;
+      await createLocalVideoAndAudioTrack();
 
       try {
         const {
@@ -129,16 +121,16 @@ export const useAgoraHandlers = (
           token: data.token,
           uid: params.userUid?.toString(),
         };
-        joinRoom(roomOptions);
+        await joinRoom(roomOptions);
 
         setToken(data.token);
         setChannel(data.channelName);
         setRoomState('ready');
       } catch (err) {
-        setError(getErrorMessage(err));
+        handleError(err);
       }
     },
-    [client, joinRoom]
+    [client, createLocalVideoAndAudioTrack, handleError, joinRoom]
   );
 
   // Publish a local track
@@ -146,19 +138,15 @@ export const useAgoraHandlers = (
     if (!client) return;
 
     if (localAudioTrack) {
-      await client.publish(localAudioTrack).catch(() => {
-        throw new Error('Fail to publish audio track');
-      });
+      await client.publish(localAudioTrack).catch(handleError);
     }
 
     if (localVideoTrack) {
-      await client.publish(localVideoTrack).catch(() => {
-        throw new Error('Fail to publish audio track');
-      });
+      await client.publish(localVideoTrack).catch(handleError);
     }
 
     setRoomState('live');
-  }, [client, localAudioTrack, localVideoTrack]);
+  }, [client, handleError, localAudioTrack, localVideoTrack]);
 
   // Unpublish a local track
   const unpublishTracks: UnpublishTracksHandler = useCallback(
@@ -202,10 +190,10 @@ export const useAgoraHandlers = (
 
         setRoomState('ready');
       } catch (error) {
-        console.log({ error });
+        handleError(error);
       }
     },
-    [client, localAudioTrack, localVideoTrack]
+    [client, handleError, localAudioTrack, localVideoTrack]
   );
 
   // Toggle mute for a media type
@@ -235,16 +223,21 @@ export const useAgoraHandlers = (
       localAudioTrack.stop();
       localAudioTrack.close();
     }
+
     if (localVideoTrack) {
       localVideoTrack.stop();
       localVideoTrack.close();
     }
 
-    await client?.leave();
+    try {
+      await client?.leave();
 
-    setRemoteUsers([]);
-    setRoomState('idle');
-  }, [client, localAudioTrack, localVideoTrack]);
+      setRemoteUsers([]);
+      setRoomState('idle');
+    } catch (error) {
+      handleError(error);
+    }
+  }, [client, handleError, localAudioTrack, localVideoTrack]);
 
   useEffect(() => {
     if (roomState === 'ready') {
@@ -262,7 +255,7 @@ export const useAgoraHandlers = (
       user: IAgoraRTCRemoteUser,
       mediaType: 'audio' | 'video'
     ) => {
-      await client.subscribe(user, mediaType);
+      await client.subscribe(user, mediaType).catch(handleError);
       setRemoteUsers(Array.from(client.remoteUsers));
     };
 
@@ -289,7 +282,7 @@ export const useAgoraHandlers = (
       client.off('user-joined', handleUserJoined);
       client.off('user-left', handleUserLeft);
     };
-  }, [client]);
+  }, [client, handleError]);
 
   return {
     roomState,
@@ -303,7 +296,6 @@ export const useAgoraHandlers = (
     token,
     toggleAudio,
     toggleVideo,
-    error,
     joinRoom,
     remoteUsers,
     unpublishTracks,

@@ -11,6 +11,7 @@ type ProviderProps = {
 const AlertProvider = ({ children }: ProviderProps) => {
   const [isVisible, setIsVisible] = React.useState(false);
   const [message, setMessage] = React.useState<React.ReactNode | null>(null);
+  const [color, setColor] = React.useState('info');
 
   React.useEffect(() => {
     let timerId: NodeJS.Timeout;
@@ -28,6 +29,7 @@ const AlertProvider = ({ children }: ProviderProps) => {
   const trigger: Context['trigger'] = React.useCallback((type, message) => {
     setIsVisible(true);
     setMessage(message);
+    setColor(type);
   }, []);
 
   const value = React.useMemo(() => ({ trigger }), [trigger]);
@@ -37,6 +39,7 @@ const AlertProvider = ({ children }: ProviderProps) => {
       {children}
 
       <Alert
+        color={color}
         className="fixed bottom-2 right-4"
         isOpen={isVisible}
         toggle={onDismiss}
