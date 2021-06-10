@@ -43,6 +43,7 @@ const AgoraDeviceTestModal = () => {
     kind: 'videoinput',
   });
 
+  // TODO broken view on mobile
   // TODO clean up these into custom hookS, only expose things that are used by the components
   useEffect(() => {
     const track = audioInput.track;

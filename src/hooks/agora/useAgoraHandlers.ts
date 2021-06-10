@@ -95,14 +95,18 @@ export const useAgoraHandlers = (
   // join an existing room
   const joinRoom: JoinRoom = useCallback(
     async ({ channelName, token, uid }) => {
+      if (!agoraRtc || !client) return;
+
       // In case user has left room before
       await createLocalVideoAndAudioTrack();
 
       await client?.join(NEXT_PUBLIC_AGORA_APP_ID, channelName, token, uid);
 
       setRoomState('ready');
+      setChannel(channelName);
+      setToken(token);
     },
-    [client, createLocalVideoAndAudioTrack]
+    [agoraRtc, client, createLocalVideoAndAudioTrack]
   );
 
   // Create a new room with token
