@@ -18,6 +18,8 @@ export const useAgoraHandlers = (
   client: IAgoraRTCClient | null,
   agoraRtc: IAgoraRTC | null
 ) => {
+  const [roomState, setRoomState] = useState<RoomState>('idle');
+
   const [localVideoTrack, setLocalVideoTrack] = useState<ICameraVideoTrack>();
   const [localAudioTrack, setLocalAudioTrack] =
     useState<IMicrophoneAudioTrack>();
@@ -94,6 +96,8 @@ export const useAgoraHandlers = (
   const joinRoom: JoinRoom = useCallback(
     async ({ channelName, token, uid }) => {
       await client?.join(NEXT_PUBLIC_AGORA_APP_ID, channelName, token, uid);
+
+      setRoomState('ready');
     },
     [client]
   );
@@ -122,6 +126,7 @@ export const useAgoraHandlers = (
 
         setToken(data.token);
         setChannel(data.channelName);
+        setRoomState('ready');
       } catch (err) {
         setError(getErrorMessage(err));
       }
@@ -144,6 +149,8 @@ export const useAgoraHandlers = (
         throw new Error('Fail to publish audio track');
       });
     }
+
+    setRoomState('live');
   }, [client, localAudioTrack, localVideoTrack]);
 
   // Unpublish a local track
@@ -164,7 +171,7 @@ export const useAgoraHandlers = (
               setLocalVideoTrack(undefined);
             }
 
-            return;
+            break;
 
           case 'audio':
             if (localAudioTrack) {
@@ -172,7 +179,7 @@ export const useAgoraHandlers = (
               setLocalAudioTrack(undefined);
             }
 
-            return;
+            break;
 
           case 'video':
             if (localVideoTrack) {
@@ -180,12 +187,13 @@ export const useAgoraHandlers = (
               setLocalVideoTrack(undefined);
             }
 
-            return;
+            break;
 
           default:
             throw new Error('Invalid track type');
         }
-        // setJoinState('joined');
+
+        setRoomState('ready');
       } catch (error) {
         console.log({ error });
       }
@@ -237,10 +245,10 @@ export const useAgoraHandlers = (
       localVideoTrack.close();
     }
 
-    setRemoteUsers([]);
-
-    // setJoinState('idle');
     await client?.leave();
+
+    setRemoteUsers([]);
+    setRoomState('idle');
   }, [client, localAudioTrack, localVideoTrack]);
 
   useEffect(() => {
@@ -289,6 +297,7 @@ export const useAgoraHandlers = (
   }, [client]);
 
   return {
+    roomState,
     isEnabledAudio,
     isEnabledVideo,
     createRoom,
@@ -311,6 +320,7 @@ type RoomOptions = {
   token: string;
   uid?: string;
 };
+type RoomState = 'idle' | 'ready' | 'live' | 'error';
 type TrackType = 'video' | 'audio' | '*';
 type TrackConfig = {
   audio?: MicrophoneAudioTrackInitConfig;

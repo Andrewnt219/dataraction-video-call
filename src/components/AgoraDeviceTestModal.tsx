@@ -26,7 +26,11 @@ import { isMicrophoneTrack } from '_lib/agora/agora-utils';
 import { useAgoraDevice } from '_lib/agora/useAgoraDevice';
 import AgoraVideoPlayer from './AgoraVideoPlayer';
 const AgoraDeviceTestModal = () => {
-  const { agoraRtc, localAudioTrack, localVideoTrack } = useAgoraContext();
+  const {
+    agoraRtc,
+    handlers: { localAudioTrack, localVideoTrack, publishTracks },
+  } = useAgoraContext();
+
   const [volumeLevel, setVolumeLevel] = useState(0);
 
   const audioInput = useAgoraDevice({
@@ -60,6 +64,8 @@ const AgoraDeviceTestModal = () => {
     if (videoInput.selectedDevice) {
       localVideoTrack?.setDevice(videoInput.selectedDevice.deviceId);
     }
+
+    publishTracks();
   };
 
   const handleAudioInputChange: ChangeEventHandler<HTMLInputElement> = (e) =>
