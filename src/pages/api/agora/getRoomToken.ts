@@ -8,7 +8,7 @@ import { uid } from 'uid';
 import { InvalidQuery, ResultError, ResultSuccess, ValidQuery } from '_common';
 import { apiHanler } from '_server/utils/api-utils';
 import { createResult, createValidQuery } from '_utils/create-utils';
-import { isNullOrEmptyString, isValidNumberQuery } from '_utils/validate-utils';
+import { isValidNumberQuery } from '_utils/validate-utils';
 
 export type Query = {
   channelName?: string;
@@ -28,9 +28,7 @@ const get: NextApiHandler<Data | ResultError> = (req, res) => {
 
   const { query: validQuery } = validatedQuery;
 
-  const channelName = isNullOrEmptyString(validQuery.channelName)
-    ? uid(8)
-    : validQuery.channelName;
+  const channelName = validQuery.channelName ? validQuery.channelName : uid(8);
   const userUid: number = isValidNumberQuery(validQuery.userUid)
     ? +validQuery.userUid
     : 0;
