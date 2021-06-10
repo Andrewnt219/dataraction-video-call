@@ -182,7 +182,7 @@ function Home() {
           </div>
         </div>
 
-        <div className="col-span-3">
+        <div className="col-span-3 bg-gray-900">
           {roomState === 'live' && (
             <div className="h-60 xl:h-full">
               <AgoraVideoPlayer
