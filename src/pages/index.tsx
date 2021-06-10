@@ -1,4 +1,5 @@
 import dynamic from 'next/dynamic';
+import { useRouter } from 'next/router';
 import React, { useEffect, useState } from 'react';
 import {
   FaVideo,
@@ -18,6 +19,10 @@ const AgoraDeviceTestModal = dynamic(
   }
 );
 function Home() {
+  const {
+    query: { token: tokenQuery, channelName: channelNameQuery },
+  } = useRouter();
+
   const agora = useAgora();
   const {
     client,
@@ -35,6 +40,7 @@ function Home() {
       isEnabledVideo,
       toggleMute,
       channel,
+      joinRoom,
     },
   } = agora;
 
@@ -42,12 +48,28 @@ function Home() {
 
   useEffect(() => {
     if (token && channel) {
-      const invitationLink =
-        window.location.origin + `?token=${token}&channelName=${channel}`;
+      console.log({ token, channel });
+      const invitationLink = encodeURI(
+        window.location.origin + `?token=${token}&channelName=${channel}`
+      );
 
       setInvitation(invitationLink);
     }
   }, [token, channel]);
+
+  useEffect(() => {
+    if (
+      tokenQuery &&
+      channelNameQuery &&
+      typeof tokenQuery === 'string' &&
+      typeof channelNameQuery === 'string'
+    ) {
+      joinRoom({
+        token: decodeURIComponent(tokenQuery),
+        channelName: decodeURIComponent(channelNameQuery),
+      });
+    }
+  }, [channelNameQuery, joinRoom, tokenQuery]);
 
   return (
     <AgoraProvider value={agora}>
