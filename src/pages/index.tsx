@@ -73,56 +73,58 @@ function Home() {
         </ButtonGroup>
 
         <div>
-          <div>
-            <p>
-              {localVideoTrack && 'localTrack'}
-              {localVideoTrack ? `(${client?.uid})` : ''}
-            </p>
-            <AgoraVideoPlayer
-              videoTrack={localVideoTrack}
-              audioTrack={localAudioTrack}
-            />
+          {roomState === 'live' && (
+            <div>
+              <p>
+                {localVideoTrack && 'localTrack'}
+                {localVideoTrack ? `(${client?.uid})` : ''}
+              </p>
+              <AgoraVideoPlayer
+                videoTrack={localVideoTrack}
+                audioTrack={localAudioTrack}
+              />
 
-            <ButtonGroup size="sm">
-              <Button
-                color={isEnabledAudio ? 'danger' : 'primary'}
-                onClick={() => {
-                  toggleMute('audio');
-                }}
-              >
-                {isEnabledAudio ? (
-                  <>
-                    <span className="sr-only">Mute audio</span>
-                    <FaVolumeMute />
-                  </>
-                ) : (
-                  <>
-                    <span className="sr-only">Unmute audio</span>
-                    <FaVolumeUp />
-                  </>
-                )}
-              </Button>
+              <ButtonGroup size="sm">
+                <Button
+                  color={isEnabledAudio ? 'danger' : 'primary'}
+                  onClick={() => {
+                    toggleMute('audio');
+                  }}
+                >
+                  {isEnabledAudio ? (
+                    <>
+                      <span className="sr-only">Mute audio</span>
+                      <FaVolumeMute />
+                    </>
+                  ) : (
+                    <>
+                      <span className="sr-only">Unmute audio</span>
+                      <FaVolumeUp />
+                    </>
+                  )}
+                </Button>
 
-              <Button
-                color={isEnabledVideo ? 'danger' : 'primary'}
-                onClick={() => {
-                  toggleMute('video');
-                }}
-              >
-                {isEnabledVideo ? (
-                  <>
-                    <span className="sr-only">Mute video</span>
-                    <FaVideoSlash />
-                  </>
-                ) : (
-                  <>
-                    <span className="sr-only">Unmute video</span>
-                    <FaVideo />
-                  </>
-                )}
-              </Button>
-            </ButtonGroup>
-          </div>
+                <Button
+                  color={isEnabledVideo ? 'danger' : 'primary'}
+                  onClick={() => {
+                    toggleMute('video');
+                  }}
+                >
+                  {isEnabledVideo ? (
+                    <>
+                      <span className="sr-only">Mute video</span>
+                      <FaVideoSlash />
+                    </>
+                  ) : (
+                    <>
+                      <span className="sr-only">Unmute video</span>
+                      <FaVideo />
+                    </>
+                  )}
+                </Button>
+              </ButtonGroup>
+            </div>
+          )}
 
           {remoteUsers.map((user) => (
             <div key={user.uid}>
