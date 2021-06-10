@@ -48,7 +48,6 @@ function Home() {
 
   useEffect(() => {
     if (token && channel) {
-      console.log({ token, channel });
       const invitationLink = encodeURI(
         window.location.origin + `?token=${token}&channelName=${channel}`
       );
@@ -108,39 +107,45 @@ function Home() {
 
               <ButtonGroup size="sm">
                 <Button
-                  color={isEnabledAudio ? 'danger' : 'primary'}
+                  color={isEnabledAudio ? 'primary' : 'danger'}
+                  title={
+                    isEnabledAudio ? 'Currently unmuted' : 'Currently muted'
+                  }
                   onClick={() => {
                     toggleMute('audio');
                   }}
                 >
                   {isEnabledAudio ? (
                     <>
-                      <span className="sr-only">Mute audio</span>
-                      <FaVolumeMute />
+                      <span className="sr-only">Unmute audio</span>
+                      <FaVolumeUp />
                     </>
                   ) : (
                     <>
-                      <span className="sr-only">Unmute audio</span>
-                      <FaVolumeUp />
+                      <span className="sr-only">Mute audio</span>
+                      <FaVolumeMute />
                     </>
                   )}
                 </Button>
 
                 <Button
-                  color={isEnabledVideo ? 'danger' : 'primary'}
+                  color={isEnabledVideo ? 'primary' : 'danger'}
+                  title={
+                    isEnabledVideo ? 'Currently unmuted' : 'Currently muted'
+                  }
                   onClick={() => {
                     toggleMute('video');
                   }}
                 >
                   {isEnabledVideo ? (
                     <>
-                      <span className="sr-only">Mute video</span>
-                      <FaVideoSlash />
+                      <span className="sr-only">Unmute video</span>
+                      <FaVideo />
                     </>
                   ) : (
                     <>
-                      <span className="sr-only">Unmute video</span>
-                      <FaVideo />
+                      <span className="sr-only">Mute video</span>
+                      <FaVideoSlash />
                     </>
                   )}
                 </Button>
