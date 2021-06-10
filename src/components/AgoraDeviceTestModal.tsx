@@ -71,7 +71,7 @@ const AgoraDeviceTestModal = () => {
   const handleAudioInputChange: ChangeEventHandler<HTMLInputElement> = (e) =>
     audioInput.selectDeviceById(e.target.value);
   const handleVideoChange: ChangeEventHandler<HTMLInputElement> = (e) =>
-    audioInput.selectDeviceById(e.target.value);
+    videoInput.selectDeviceById(e.target.value);
 
   return (
     <DeviceTestModal onClose={handleModalClose}>
