@@ -3,41 +3,25 @@ import type {
   IAgoraRTC,
   IAgoraRTCClient,
   IAgoraRTCRemoteUser,
-  ICameraVideoTrack,
-  IMicrophoneAudioTrack,
   MicrophoneAudioTrackInitConfig,
 } from 'agora-rtc-sdk-ng';
 import axios from 'axios';
 import { NEXT_PUBLIC_AGORA_APP_ID } from 'constants/agora';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useReducer } from 'react';
 import { useAlertContext } from '_context/AlertContext';
+import * as agoraSlice from '_lib/agora/agora-store';
 import type * as ApiAgoraGetRoomToken from '_pages/api/agora/getRoomToken';
 import { getErrorMessage } from '_utils/convert-utils';
-
 export const useAgoraHandlers = (
   client: IAgoraRTCClient | null,
   agoraRtc: IAgoraRTC | null
 ) => {
   const { trigger } = useAlertContext();
 
-  const [roomState, setRoomState] = useState<RoomState>('idle');
-
-  const [localVideoTrack, setLocalVideoTrack] = useState<ICameraVideoTrack>();
-  const [localAudioTrack, setLocalAudioTrack] =
-    useState<IMicrophoneAudioTrack>();
-
-  // TODO #13 make the state the source of truth for mute
-  // don't rely on getMediaStream().enabled
-  const [isEnabledVideo, setIsEnabledVideo] = useState(
-    localVideoTrack?.getMediaStreamTrack().enabled ?? true
+  const [state, dispatch] = useReducer(
+    agoraSlice.reducer,
+    agoraSlice.initialState
   );
-  const [isEnabledAudio, setIsEnabledAudio] = useState(
-    localAudioTrack?.getMediaStreamTrack().enabled ?? true
-  );
-
-  const [token, setToken] = useState<string | null>(null);
-  const [channel, setChannel] = useState<string>('');
-  const [remoteUsers, setRemoteUsers] = useState<IAgoraRTCRemoteUser[]>([]);
 
   const handleError = useCallback(
     (err: Error) => {
@@ -47,6 +31,7 @@ export const useAgoraHandlers = (
       else message = getErrorMessage(err).message;
 
       trigger('danger', message);
+      dispatch({ type: 'ERROR', payload: { message } });
     },
     [trigger]
   );
@@ -63,8 +48,10 @@ export const useAgoraHandlers = (
             config?.video
           );
 
-        setLocalVideoTrack(cameraTrack);
-        setLocalAudioTrack(audioTrack);
+        dispatch({
+          type: 'INIT_TRACKS',
+          payload: { audio: audioTrack, video: cameraTrack },
+        });
       } catch (error) {
         handleError(error);
       }
@@ -77,16 +64,18 @@ export const useAgoraHandlers = (
     async ({ channelName, token, uid }) => {
       if (!agoraRtc || !client) return;
 
-      // In case user has left room before
-      await createLocalVideoAndAudioTrack();
+      try {
+        // In case user has left room before
+        await createLocalVideoAndAudioTrack();
 
-      await client
-        ?.join(NEXT_PUBLIC_AGORA_APP_ID, channelName, token, uid)
-        .catch(handleError);
+        await client
+          ?.join(NEXT_PUBLIC_AGORA_APP_ID, channelName, token, uid)
+          .catch(handleError);
 
-      setRoomState('ready');
-      setChannel(channelName);
-      setToken(token);
+        dispatch({ type: 'JOIN_ROOM', payload: { channelName, token } });
+      } catch (error) {
+        handleError(error);
+      }
     },
     [agoraRtc, client, createLocalVideoAndAudioTrack, handleError]
   );
@@ -112,11 +101,8 @@ export const useAgoraHandlers = (
           token: data.token,
           uid: params.userUid?.toString(),
         };
-        await joinRoom(roomOptions);
 
-        setToken(data.token);
-        setChannel(data.channelName);
-        setRoomState('ready');
+        await joinRoom(roomOptions);
       } catch (err) {
         handleError(err);
       }
@@ -128,16 +114,16 @@ export const useAgoraHandlers = (
   const publishTracks: PublishTracksHandler = useCallback(async () => {
     if (!client) return;
 
-    if (localAudioTrack) {
-      await client.publish(localAudioTrack).catch(handleError);
+    if (state.localAudioTrack) {
+      await client.publish(state.localAudioTrack).catch(handleError);
     }
 
-    if (localVideoTrack) {
-      await client.publish(localVideoTrack).catch(handleError);
+    if (state.localVideoTrack) {
+      await client.publish(state.localVideoTrack).catch(handleError);
     }
 
-    setRoomState('live');
-  }, [client, handleError, localAudioTrack, localVideoTrack]);
+    dispatch({ type: 'PUBLISH_TRACKS' });
+  }, [client, handleError, state.localAudioTrack, state.localVideoTrack]);
 
   // Unpublish a local track
   const unpublishTracks: UnpublishTracksHandler = useCallback(
@@ -147,30 +133,30 @@ export const useAgoraHandlers = (
       try {
         switch (trackType) {
           case '*':
-            if (localAudioTrack) {
-              await client.unpublish(localAudioTrack);
-              setLocalAudioTrack(undefined);
+            if (state.localAudioTrack) {
+              await client.unpublish(state.localAudioTrack);
+              dispatch({ type: 'UNPUBLISH_AUDIO_INPUT' });
             }
 
-            if (localVideoTrack) {
-              await client.unpublish(localVideoTrack);
-              setLocalVideoTrack(undefined);
+            if (state.localVideoTrack) {
+              await client.unpublish(state.localVideoTrack);
+              dispatch({ type: 'UNPUBLISH_VIDEO_INPUT' });
             }
 
             break;
 
           case 'audio':
-            if (localAudioTrack) {
-              await client.unpublish(localAudioTrack);
-              setLocalAudioTrack(undefined);
+            if (state.localAudioTrack) {
+              await client.unpublish(state.localAudioTrack);
+              dispatch({ type: 'UNPUBLISH_AUDIO_INPUT' });
             }
 
             break;
 
           case 'video':
-            if (localVideoTrack) {
-              await client.unpublish(localVideoTrack);
-              setLocalVideoTrack(undefined);
+            if (state.localVideoTrack) {
+              await client.unpublish(state.localVideoTrack);
+              dispatch({ type: 'UNPUBLISH_VIDEO_INPUT' });
             }
 
             break;
@@ -178,58 +164,53 @@ export const useAgoraHandlers = (
           default:
             throw new Error('Invalid track type');
         }
-
-        setRoomState('ready');
       } catch (error) {
         handleError(error);
       }
     },
-    [client, handleError, localAudioTrack, localVideoTrack]
+    [client, handleError, state.localAudioTrack, state.localVideoTrack]
   );
 
   // Toggle mute for a media type
   const toggleAudio = useCallback(() => {
-    if (localAudioTrack !== undefined) {
-      localAudioTrack.setEnabled(!isEnabledAudio);
-      setIsEnabledAudio((prev) => !prev);
+    if (state.localAudioTrack !== undefined) {
+      state.localAudioTrack.setEnabled(!state.isEnabledAudio);
+      dispatch({ type: 'TOGGLE_AUDIO' });
     }
     return;
-  }, [isEnabledAudio, localAudioTrack]);
+  }, [state.isEnabledAudio, state.localAudioTrack]);
 
   const toggleVideo = useCallback(() => {
-    if (localVideoTrack !== undefined) {
-      localVideoTrack.setEnabled(!isEnabledVideo);
-      setIsEnabledVideo((prev) => !prev);
+    if (state.localVideoTrack !== undefined) {
+      state.localVideoTrack.setEnabled(!state.isEnabledVideo);
+      dispatch({ type: 'TOGGLE_VIDEO' });
     }
     return;
-  }, [isEnabledVideo, localVideoTrack]);
+  }, [state.isEnabledVideo, state.localVideoTrack]);
 
   // Leave the room and reset state
   const leave: LeaveHandler = useCallback(async () => {
-    if (localAudioTrack) {
-      localAudioTrack.stop();
-      localAudioTrack.close();
+    if (state.localAudioTrack) {
+      state.localAudioTrack.stop();
+      state.localAudioTrack.close();
     }
 
-    if (localVideoTrack) {
-      localVideoTrack.stop();
-      localVideoTrack.close();
+    if (state.localVideoTrack) {
+      state.localVideoTrack.stop();
+      state.localVideoTrack.close();
     }
 
     try {
       await client?.leave();
 
-      setRemoteUsers([]);
-      setToken(null);
-      setChannel('');
-      setRoomState('idle');
+      dispatch({ type: 'LEAVE_ROOM' });
     } catch (error) {
       handleError(error);
     }
-  }, [client, handleError, localAudioTrack, localVideoTrack]);
+  }, [client, handleError, state.localAudioTrack, state.localVideoTrack]);
 
   useEffect(() => {
-    switch (roomState) {
+    switch (state.roomState) {
       case 'idle':
         trigger('info', 'Not in a room');
         break;
@@ -251,32 +232,44 @@ export const useAgoraHandlers = (
       default:
         break;
     }
-  }, [roomState, createLocalVideoAndAudioTrack, trigger]);
+  }, [createLocalVideoAndAudioTrack, trigger, state.roomState]);
 
   // Set up listeners for agora's events
   useEffect(() => {
     if (!client) return;
 
-    setRemoteUsers(client.remoteUsers);
+    dispatch({ type: 'SET_REMOTE_USER', payload: client.remoteUsers });
 
     const handleUserPublished = async (
       user: IAgoraRTCRemoteUser,
       mediaType: 'audio' | 'video'
     ) => {
       await client.subscribe(user, mediaType).catch(handleError);
-      setRemoteUsers(Array.from(client.remoteUsers));
+      dispatch({
+        type: 'SET_REMOTE_USER',
+        payload: Array.from(client.remoteUsers),
+      });
     };
 
     const handleUserUnpublished = (_user: IAgoraRTCRemoteUser) => {
-      setRemoteUsers(Array.from(client.remoteUsers));
+      dispatch({
+        type: 'SET_REMOTE_USER',
+        payload: Array.from(client.remoteUsers),
+      });
     };
 
     const handleUserJoined = (__user: IAgoraRTCRemoteUser) => {
-      setRemoteUsers(Array.from(client.remoteUsers));
+      dispatch({
+        type: 'SET_REMOTE_USER',
+        payload: Array.from(client.remoteUsers),
+      });
     };
 
     const handleUserLeft = (__user: IAgoraRTCRemoteUser) => {
-      setRemoteUsers(Array.from(client.remoteUsers));
+      dispatch({
+        type: 'SET_REMOTE_USER',
+        payload: Array.from(client.remoteUsers),
+      });
     };
 
     client.on('user-published', handleUserPublished);
@@ -293,21 +286,14 @@ export const useAgoraHandlers = (
   }, [client, handleError]);
 
   return {
-    roomState,
-    isEnabledAudio,
-    isEnabledVideo,
+    state,
     createRoom,
     leave,
     publishTracks,
-    localAudioTrack,
-    localVideoTrack,
-    token,
     toggleAudio,
     toggleVideo,
     joinRoom,
-    remoteUsers,
     unpublishTracks,
-    channel,
   };
 };
 
@@ -316,7 +302,7 @@ type RoomOptions = {
   token: string;
   uid?: string;
 };
-type RoomState = 'idle' | 'ready' | 'live' | 'error';
+
 type TrackType = 'video' | 'audio' | '*';
 type TrackConfig = {
   audio?: MicrophoneAudioTrackInitConfig;

@@ -1,6 +1,16 @@
 declare module '_common' {
   import { GetStaticPathsResult, GetStaticPropsResult } from 'next';
 
+  type ActionWithPayload<Type extends string, Payload> = {
+    type: Type;
+    payload: Payload;
+  };
+
+  type ActionWithouPayload<Type extends string> = {
+    type: Type;
+    payload?: never;
+  };
+
   type ErrorMessage = {
     message: string;
   };

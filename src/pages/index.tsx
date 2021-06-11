@@ -38,21 +38,7 @@ function Home() {
 
   const agora = useAgora();
   const {
-    handlers: {
-      localAudioTrack,
-      localVideoTrack,
-      leave,
-      createRoom,
-      remoteUsers,
-      token,
-      roomState,
-      isEnabledAudio,
-      isEnabledVideo,
-      toggleAudio,
-      toggleVideo,
-      channel,
-      joinRoom,
-    },
+    handlers: { state, leave, createRoom, toggleAudio, toggleVideo, joinRoom },
   } = agora;
 
   const { trigger } = useAlertContext();
@@ -60,16 +46,22 @@ function Home() {
   const [invitation, setInvitation] = useState<string>('');
 
   useEffect(() => {
-    if (token && localAudioTrack && localVideoTrack) {
+    if (state.token && state.localAudioTrack && state.localVideoTrack) {
       const invitationLink = encodeURI(
-        window.location.origin + `?token=${token}&channelName=${channel}`
+        window.location.origin +
+          `?token=${state.token}&channelName=${state.channelName}`
       );
 
       setInvitation(invitationLink);
     } else {
       setInvitation('');
     }
-  }, [token, channel, localAudioTrack, localVideoTrack]);
+  }, [
+    state.token,
+    state.localAudioTrack,
+    state.localVideoTrack,
+    state.channelName,
+  ]);
 
   useEffect(() => {
     if (typeof tokenQuery !== 'string' || typeof channelNameQuery !== 'string')
@@ -91,7 +83,7 @@ function Home() {
             <Button
               color="primary"
               onClick={() => {
-                createRoom({ channelName: channel });
+                createRoom({ channelName: state.channelName });
               }}
             >
               Create
@@ -133,13 +125,15 @@ function Home() {
                 <CardBody>
                   <Button
                     className="mb-2 w-full"
-                    color={isEnabledAudio ? 'primary' : 'danger'}
+                    color={state.isEnabledAudio ? 'primary' : 'danger'}
                     title={
-                      isEnabledAudio ? 'Currently unmuted' : 'Currently muted'
+                      state.isEnabledAudio
+                        ? 'Currently unmuted'
+                        : 'Currently muted'
                     }
                     onClick={toggleAudio}
                   >
-                    {isEnabledAudio ? (
+                    {state.isEnabledAudio ? (
                       <span>
                         <span className="sr-only">Unmute audio</span>
                         <FaVolumeUp />
@@ -156,13 +150,15 @@ function Home() {
 
                   <Button
                     className="mb-2 mt-4 w-full"
-                    color={isEnabledVideo ? 'primary' : 'danger'}
+                    color={state.isEnabledVideo ? 'primary' : 'danger'}
                     title={
-                      isEnabledVideo ? 'Currently unmuted' : 'Currently muted'
+                      state.isEnabledVideo
+                        ? 'Currently unmuted'
+                        : 'Currently muted'
                     }
                     onClick={toggleVideo}
                   >
-                    {isEnabledVideo ? (
+                    {state.isEnabledVideo ? (
                       <span>
                         <span className="sr-only">Unmute video</span>
                         <FaVideo />
@@ -183,11 +179,11 @@ function Home() {
         </div>
 
         <div className="col-span-3 bg-gray-900">
-          {roomState === 'live' && (
+          {state.roomState === 'live' && (
             <div className="h-60 xl:h-full">
               <AgoraVideoPlayer
-                videoTrack={localVideoTrack}
-                audioTrack={localAudioTrack}
+                videoTrack={state.localVideoTrack}
+                audioTrack={state.localAudioTrack}
               />
 
               <p>You</p>
@@ -197,7 +193,7 @@ function Home() {
       </div>
 
       <div className="mt-12 grid md:grid-cols-2  gap-4 xl:grid-cols-4">
-        {remoteUsers.map((user) => (
+        {state.remoteUsers.map((user) => (
           <div className="h-60 flex flex-col w-full" key={user.uid}>
             <AgoraVideoPlayer
               videoTrack={user.videoTrack}
@@ -208,7 +204,7 @@ function Home() {
           </div>
         ))}
       </div>
-      {roomState === 'ready' && <AgoraDeviceTestModal />}
+      {state.roomState === 'ready' && <AgoraDeviceTestModal />}
     </AgoraProvider>
   );
 }
