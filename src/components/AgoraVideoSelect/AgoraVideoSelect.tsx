@@ -32,7 +32,11 @@ const AgoraVideoSelect = ({ hidePreview = false }: Props) => {
           </InputGroupText>
         </InputGroupAddon>
 
-        <Input type="select" onChange={handleVideoChange}>
+        <Input
+          type="select"
+          value={state.videoinput.selectedDevice?.deviceId}
+          onChange={handleVideoChange}
+        >
           {state.videoinput.devices.map((device) => (
             <option value={device.deviceId} key={device.deviceId}>
               {device.label}
