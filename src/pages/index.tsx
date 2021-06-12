@@ -20,7 +20,6 @@ import {
   InputGroupAddon,
   UncontrolledCollapse,
 } from 'reactstrap';
-import { AgoraProvider } from '_context/AgoraContext';
 import { useAlertContext } from '_context/AlertContext';
 import useAgora from '_hooks/agora/useAgora';
 import AgoraVideoPlayer from '../components/AgoraVideoPlayer/AgoraVideoPlayer';
@@ -36,10 +35,9 @@ function Home() {
     query: { token: tokenQuery, channelName: channelNameQuery },
   } = useRouter();
 
-  const agora = useAgora();
   const {
     handlers: { state, leave, createRoom, toggleAudio, toggleVideo, joinRoom },
-  } = agora;
+  } = useAgora();
 
   const { trigger } = useAlertContext();
 
@@ -74,7 +72,7 @@ function Home() {
   }, [channelNameQuery, joinRoom, tokenQuery]);
 
   return (
-    <AgoraProvider value={agora}>
+    <>
       <div className="grid gap-y-4  xl:grid-cols-4 xl:gap-x-4 xl:gap-y-0">
         <div className="shadow p-4">
           <h3>Controls</h3>
@@ -205,7 +203,7 @@ function Home() {
         ))}
       </div>
       {state.roomState === 'ready' && <AgoraDeviceTestModal />}
-    </AgoraProvider>
+    </>
   );
 }
 

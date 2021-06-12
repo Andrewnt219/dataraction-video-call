@@ -1,27 +1,20 @@
 import type {
   CameraVideoTrackInitConfig,
-  IAgoraRTC,
-  IAgoraRTCClient,
   IAgoraRTCRemoteUser,
   MicrophoneAudioTrackInitConfig,
 } from 'agora-rtc-sdk-ng';
 import axios from 'axios';
 import { NEXT_PUBLIC_AGORA_APP_ID } from 'constants/agora';
-import { useCallback, useEffect, useReducer } from 'react';
+import { useCallback, useEffect } from 'react';
+import { useAgoraContext, useAgoraDispatch } from '_context/AgoraContext';
 import { useAlertContext } from '_context/AlertContext';
-import * as agoraSlice from '_lib/agora/agora-store';
 import type * as ApiAgoraGetRoomToken from '_pages/api/agora/getRoomToken';
 import { getErrorMessage } from '_utils/convert-utils';
-export const useAgoraHandlers = (
-  client: IAgoraRTCClient | null,
-  agoraRtc: IAgoraRTC | null
-) => {
+export const useAgoraHandlers = () => {
   const { trigger } = useAlertContext();
 
-  const [state, dispatch] = useReducer(
-    agoraSlice.reducer,
-    agoraSlice.initialState
-  );
+  const state = useAgoraContext();
+  const dispatch = useAgoraDispatch();
 
   const handleError = useCallback(
     (err: Error) => {
@@ -33,12 +26,13 @@ export const useAgoraHandlers = (
       trigger('danger', message);
       dispatch({ type: 'ERROR', payload: { message } });
     },
-    [trigger]
+    [dispatch, trigger]
   );
 
   // Ask for both video and microphone permission
   const createLocalVideoAndAudioTrack = useCallback(
     async (config?: TrackConfig): Promise<void> => {
+      const agoraRtc = state.agoraRtc;
       if (!agoraRtc) throw new Error('Agora service is not available');
 
       try {
@@ -56,12 +50,15 @@ export const useAgoraHandlers = (
         handleError(error);
       }
     },
-    [agoraRtc, handleError]
+    [dispatch, handleError, state.agoraRtc]
   );
 
   // join an existing room
   const joinRoom: JoinRoom = useCallback(
     async ({ channelName, token, uid }) => {
+      const agoraRtc = state.agoraRtc;
+      const client = state.client;
+
       if (!agoraRtc || !client) return;
 
       try {
@@ -77,12 +74,19 @@ export const useAgoraHandlers = (
         handleError(error);
       }
     },
-    [agoraRtc, client, createLocalVideoAndAudioTrack, handleError]
+    [
+      createLocalVideoAndAudioTrack,
+      dispatch,
+      handleError,
+      state.agoraRtc,
+      state.client,
+    ]
   );
 
   // Create a new room with token
   const createRoom: CreateRoomHandler = useCallback(
     async (params) => {
+      const client = state.client;
       if (!client) return;
       await createLocalVideoAndAudioTrack();
 
@@ -107,11 +111,12 @@ export const useAgoraHandlers = (
         handleError(err);
       }
     },
-    [client, createLocalVideoAndAudioTrack, handleError, joinRoom]
+    [createLocalVideoAndAudioTrack, handleError, joinRoom, state.client]
   );
 
   // Publish a local track
   const publishTracks: PublishTracksHandler = useCallback(async () => {
+    const client = state.client;
     if (!client) return;
 
     if (state.localAudioTrack) {
@@ -123,11 +128,18 @@ export const useAgoraHandlers = (
     }
 
     dispatch({ type: 'PUBLISH_TRACKS' });
-  }, [client, handleError, state.localAudioTrack, state.localVideoTrack]);
+  }, [
+    dispatch,
+    handleError,
+    state.client,
+    state.localAudioTrack,
+    state.localVideoTrack,
+  ]);
 
   // Unpublish a local track
   const unpublishTracks: UnpublishTracksHandler = useCallback(
     async (trackType) => {
+      const client = state.client;
       if (!client) return;
 
       try {
@@ -168,37 +180,30 @@ export const useAgoraHandlers = (
         handleError(error);
       }
     },
-    [client, handleError, state.localAudioTrack, state.localVideoTrack]
+    [
+      dispatch,
+      handleError,
+      state.client,
+      state.localAudioTrack,
+      state.localVideoTrack,
+    ]
   );
 
   // Toggle mute for a media type
   const toggleAudio = useCallback(() => {
-    if (state.localAudioTrack !== undefined) {
-      state.localAudioTrack.setEnabled(!state.isEnabledAudio);
-      dispatch({ type: 'TOGGLE_AUDIO' });
-    }
+    dispatch({ type: 'TOGGLE_AUDIO' });
+
     return;
-  }, [state.isEnabledAudio, state.localAudioTrack]);
+  }, [dispatch, state.localAudioTrack]);
 
   const toggleVideo = useCallback(() => {
-    if (state.localVideoTrack !== undefined) {
-      state.localVideoTrack.setEnabled(!state.isEnabledVideo);
-      dispatch({ type: 'TOGGLE_VIDEO' });
-    }
-    return;
-  }, [state.isEnabledVideo, state.localVideoTrack]);
+    dispatch({ type: 'TOGGLE_VIDEO' });
+  }, [dispatch]);
 
   // Leave the room and reset state
   const leave: LeaveHandler = useCallback(async () => {
-    if (state.localAudioTrack) {
-      state.localAudioTrack.stop();
-      state.localAudioTrack.close();
-    }
-
-    if (state.localVideoTrack) {
-      state.localVideoTrack.stop();
-      state.localVideoTrack.close();
-    }
+    const client = state.client;
+    if (!client) return;
 
     try {
       await client?.leave();
@@ -207,7 +212,7 @@ export const useAgoraHandlers = (
     } catch (error) {
       handleError(error);
     }
-  }, [client, handleError, state.localAudioTrack, state.localVideoTrack]);
+  }, [dispatch, handleError, state.client]);
 
   useEffect(() => {
     switch (state.roomState) {
@@ -236,6 +241,7 @@ export const useAgoraHandlers = (
 
   // Set up listeners for agora's events
   useEffect(() => {
+    const client = state.client;
     if (!client) return;
 
     dispatch({ type: 'SET_REMOTE_USER', payload: client.remoteUsers });
@@ -283,7 +289,7 @@ export const useAgoraHandlers = (
       client.off('user-joined', handleUserJoined);
       client.off('user-left', handleUserLeft);
     };
-  }, [client, handleError]);
+  }, [dispatch, handleError, state.client]);
 
   return {
     state,

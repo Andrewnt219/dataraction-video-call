@@ -7,7 +7,7 @@ import type {
 } from 'agora-rtc-sdk-ng';
 import { ActionWithouPayload, ActionWithPayload, ErrorMessage } from '_common';
 
-type State = {
+export type State = {
   agoraRtc: IAgoraRTC | null;
   client: IAgoraRTCClient | null;
 
@@ -42,7 +42,7 @@ export const initialState: State = {
   error: null,
 };
 
-type Action =
+export type Action =
   | ActionWithPayload<'INIT_RTC', IAgoraRTC>
   | ActionWithPayload<'INIT_CLIENT', IAgoraRTCClient>
   | ActionWithPayload<
@@ -126,20 +126,55 @@ export const reducer = (state: State, action: Action): State => {
         roomState: 'ready',
       };
 
-    case 'TOGGLE_AUDIO':
-      return { ...state, isEnabledAudio: !state.isEnabledAudio };
+    case 'TOGGLE_AUDIO': {
+      const { localAudioTrack } = state;
 
-    case 'TOGGLE_VIDEO':
-      return { ...state, isEnabledVideo: !state.isEnabledVideo };
+      if (!localAudioTrack) return state;
 
-    case 'LEAVE_ROOM':
+      localAudioTrack.setEnabled(!state.isEnabledAudio);
       return {
         ...state,
+        localAudioTrack,
+        isEnabledAudio: !state.isEnabledAudio,
+      };
+    }
+
+    case 'TOGGLE_VIDEO': {
+      const { localVideoTrack } = state;
+
+      if (!localVideoTrack) return state;
+
+      localVideoTrack.setEnabled(!state.isEnabledAudio);
+      return {
+        ...state,
+        localVideoTrack,
+        isEnabledVideo: !state.isEnabledVideo,
+      };
+    }
+
+    case 'LEAVE_ROOM': {
+      const { localAudioTrack, localVideoTrack } = state;
+
+      if (localAudioTrack) {
+        localAudioTrack.stop();
+        localAudioTrack.close();
+      }
+
+      if (localVideoTrack) {
+        localVideoTrack.stop();
+        localVideoTrack.close();
+      }
+
+      return {
+        ...state,
+        localAudioTrack,
+        localVideoTrack,
         token: null,
         channelName: undefined,
         remoteUsers: [],
         roomState: 'idle',
       };
+    }
 
     case 'START_LOADING':
       return { ...state, isLoading: true, error: null };

@@ -1,9 +1,8 @@
-import { ClientConfig, IAgoraRTC, IAgoraRTCClient } from 'agora-rtc-sdk-ng';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useAgoraDispatch } from '_context/AgoraContext';
 
-export const useAgoraInit = (clientConfig?: ClientConfig) => {
-  const [agoraRtc, setAgoraRtc] = useState<IAgoraRTC | null>(null);
-  const [client, setClient] = useState<IAgoraRTCClient | null>(null);
+export const useAgoraInit = () => {
+  const dispatch = useAgoraDispatch();
 
   useEffect(() => {
     import('agora-rtc-sdk-ng')
@@ -11,17 +10,11 @@ export const useAgoraInit = (clientConfig?: ClientConfig) => {
         const agoraClient = AgoraRTC.createClient({
           codec: 'h264',
           mode: 'rtc',
-          ...clientConfig,
         });
 
-        setAgoraRtc(AgoraRTC);
-        setClient(agoraClient);
+        dispatch({ type: 'INIT_CLIENT', payload: agoraClient });
+        dispatch({ type: 'INIT_RTC', payload: AgoraRTC });
       })
       .catch((err) => console.log('Fail to load Agora'));
-  }, []);
-
-  return {
-    agoraRtc,
-    client,
-  };
+  }, [dispatch]);
 };

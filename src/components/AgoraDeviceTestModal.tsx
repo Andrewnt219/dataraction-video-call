@@ -9,13 +9,11 @@ import {
   ModalFooter,
   ModalHeader,
 } from 'reactstrap';
-import { useAgoraContext } from '_context/AgoraContext';
+import { useAgoraHandlers } from '_hooks/agora/useAgoraHandlers';
 import AgoraAudioSelect from './AgoraAudioSelect.tsx/AgoraAudioSelect';
 import AgoraVideoSelect from './AgoraVideoSelect/AgoraVideoSelect';
 const AgoraDeviceTestModal = () => {
-  const {
-    handlers: { publishTracks },
-  } = useAgoraContext();
+  const { publishTracks } = useAgoraHandlers();
 
   const [isOpen, setIsOpen] = useState(true);
 

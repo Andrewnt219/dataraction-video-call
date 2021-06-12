@@ -1,12 +1,10 @@
-import type { ClientConfig } from 'agora-rtc-sdk-ng';
 import { useAgoraHandlers } from './useAgoraHandlers';
 import { useAgoraInit } from './useAgoraInit';
 
-export default function useAgora(clientConfig?: ClientConfig) {
-  const { agoraRtc, client } = useAgoraInit(clientConfig);
+export default function useAgora() {
+  useAgoraInit();
 
-  // const [joinState, setJoinState] = useState<ReturnType['joinState']>('idle');
-  const handlers = useAgoraHandlers(client, agoraRtc);
+  const handlers = useAgoraHandlers();
 
-  return { handlers, client, agoraRtc };
+  return { handlers };
 }

@@ -15,9 +15,7 @@ type Props = {
 };
 const AgoraAudioSelect = ({ hidePreview }: Props) => {
   const { audioInput, volumeLevel } = useAgoraAudioSelect(hidePreview);
-  const {
-    handlers: { localAudioTrack },
-  } = useAgoraContext();
+  const { localAudioTrack } = useAgoraContext();
 
   const handleAudioInputChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const deviceId = e.target.value;

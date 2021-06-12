@@ -1,14 +1,29 @@
 import * as React from 'react';
-import useAgora from '_hooks/agora/useAgora';
-type Context = ReturnType<typeof useAgora>;
+import { useReducer } from 'react';
+import * as agoraSlice from '_lib/agora/agora-store';
+type Context = agoraSlice.State;
 const Context = React.createContext<Context | undefined>(undefined);
+
+type DispatchContext = React.Dispatch<agoraSlice.Action>;
+const DispatchContext =
+  React.createContext<DispatchContext | undefined>(undefined);
 
 type ProviderProps = {
   children: React.ReactNode | React.ReactNode[];
-  value: Context;
 };
-const AgoraProvider = ({ children, value }: ProviderProps) => {
-  return <Context.Provider value={value}>{children}</Context.Provider>;
+const AgoraProvider = ({ children }: ProviderProps) => {
+  const [state, dispatch] = useReducer(
+    agoraSlice.reducer,
+    agoraSlice.initialState
+  );
+
+  return (
+    <Context.Provider value={state}>
+      <DispatchContext.Provider value={dispatch}>
+        {children}
+      </DispatchContext.Provider>
+    </Context.Provider>
+  );
 };
 
 const useAgoraContext = (): Context => {
@@ -21,4 +36,14 @@ const useAgoraContext = (): Context => {
   return context;
 };
 
-export { AgoraProvider, useAgoraContext };
+const useAgoraDispatch = (): DispatchContext => {
+  const context = React.useContext(DispatchContext);
+
+  if (context === undefined) {
+    throw new Error('Must be use within AgoraContext');
+  }
+
+  return context;
+};
+
+export { AgoraProvider, useAgoraContext, useAgoraDispatch };
