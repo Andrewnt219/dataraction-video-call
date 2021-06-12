@@ -44,11 +44,17 @@ function Home() {
   const [invitation, setInvitation] = useState<string>('');
 
   useEffect(() => {
-    if (state.token && state.localAudioTrack && state.localVideoTrack) {
-      const invitationLink = encodeURI(
+    if (
+      state.token &&
+      state.channelName &&
+      state.localAudioTrack &&
+      state.localVideoTrack
+    ) {
+      const invitationLink =
         window.location.origin +
-          `?token=${state.token}&channelName=${state.channelName}`
-      );
+        `?token=${encodeURIComponent(
+          state.token
+        )}&channelName=${encodeURIComponent(state.channelName)}`;
 
       setInvitation(invitationLink);
     } else {
@@ -64,7 +70,7 @@ function Home() {
   useEffect(() => {
     if (typeof tokenQuery !== 'string' || typeof channelNameQuery !== 'string')
       return;
-
+    debugger;
     joinRoom({
       token: decodeURIComponent(tokenQuery),
       channelName: decodeURIComponent(channelNameQuery),
