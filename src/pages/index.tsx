@@ -1,8 +1,7 @@
 import AgoraAudioSelect from 'components/AgoraAudioSelect.tsx/AgoraAudioSelect';
 import AgoraVideoSelect from 'components/AgoraVideoSelect/AgoraVideoSelect';
 import dynamic from 'next/dynamic';
-import { useRouter } from 'next/router';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   FaCopy,
   FaVideo,
@@ -21,6 +20,7 @@ import {
   UncontrolledCollapse,
 } from 'reactstrap';
 import { useAlertContext } from '_context/AlertContext';
+import { useInvitationLink } from '_hooks/useInvitationLink';
 import { useAgoraContext } from '_lib/agora/AgoraContext';
 import { useAgoraHandlers } from '_lib/agora/useAgoraHandlers';
 import AgoraVideoPlayer from '../components/AgoraVideoPlayer/AgoraVideoPlayer';
@@ -32,50 +32,24 @@ const AgoraDeviceTestModal = dynamic(
   }
 );
 function Home() {
-  const {
-    query: { token: tokenQuery, channelName: channelNameQuery },
-  } = useRouter();
-
   const { leave, createRoom, toggleAudio, toggleVideo, joinRoom } =
     useAgoraHandlers();
   const state = useAgoraContext();
+
   const { trigger } = useAlertContext();
 
-  const [invitation, setInvitation] = useState<string>('');
+  const invitation = useInvitationLink();
 
-  useEffect(() => {
-    if (
-      state.token &&
-      state.channelName &&
-      state.localAudioTrack &&
-      state.localVideoTrack
-    ) {
-      const invitationLink =
-        window.location.origin +
-        `?token=${encodeURIComponent(
-          state.token
-        )}&channelName=${encodeURIComponent(state.channelName)}`;
+  const handleCreateRoomButtonClick = () =>
+    createRoom({ channelName: state.channelName });
 
-      setInvitation(invitationLink);
-    } else {
-      setInvitation('');
-    }
-  }, [
-    state.token,
-    state.localAudioTrack,
-    state.localVideoTrack,
-    state.channelName,
-  ]);
+  const handleClipboardCopyClick = () => () => {
+    navigator.clipboard.writeText(invitation);
+    trigger('info', 'Copied to clipboard');
+  };
 
-  useEffect(() => {
-    if (typeof tokenQuery !== 'string' || typeof channelNameQuery !== 'string')
-      return;
-    debugger;
-    joinRoom({
-      token: decodeURIComponent(tokenQuery),
-      channelName: decodeURIComponent(channelNameQuery),
-    });
-  }, [channelNameQuery, joinRoom, tokenQuery]);
+  const handleInvitationInputClick: React.MouseEventHandler<HTMLInputElement> =
+    (e) => e.currentTarget.select();
 
   return (
     <>
@@ -84,12 +58,7 @@ function Home() {
           <h3>Controls</h3>
 
           <ButtonGroup className="w-full mb-2">
-            <Button
-              color="primary"
-              onClick={() => {
-                createRoom({ channelName: state.channelName });
-              }}
-            >
+            <Button color="primary" onClick={handleCreateRoomButtonClick}>
               Create
             </Button>
 
@@ -100,13 +69,7 @@ function Home() {
 
           <InputGroup className="mb-4">
             <InputGroupAddon addonType="prepend">
-              <Button
-                color="info"
-                onClick={() => {
-                  navigator.clipboard.writeText(invitation);
-                  trigger('info', 'Copied to clipboard');
-                }}
-              >
+              <Button color="info" onClick={handleClipboardCopyClick}>
                 <FaCopy />
               </Button>
             </InputGroupAddon>
@@ -115,7 +78,7 @@ function Home() {
               readOnly
               aria-readonly
               value={invitation}
-              onClick={(e) => e.currentTarget.select()}
+              onClick={handleInvitationInputClick}
             />
           </InputGroup>
 
@@ -208,6 +171,7 @@ function Home() {
           </div>
         ))}
       </div>
+
       {state.roomState === 'ready' && <AgoraDeviceTestModal />}
     </>
   );
