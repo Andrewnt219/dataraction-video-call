@@ -1,11 +1,11 @@
 import { RtcRole, RtcTokenBuilder } from 'agora-access-token';
-import {
-  AGORA_APP_PRIMARY_CERTIFICATE,
-  NEXT_PUBLIC_AGORA_APP_ID,
-} from 'constants/agora';
 import { NextApiHandler, NextApiRequest, NextApiResponse } from 'next';
 import { uid } from 'uid';
 import { InvalidQuery, ResultError, ResultSuccess, ValidQuery } from '_common';
+import {
+  AGORA_APP_PRIMARY_CERTIFICATE,
+  NEXT_PUBLIC_AGORA_APP_ID,
+} from '_lib/agora/agora-constants';
 import { apiHanler } from '_server/utils/api-utils';
 import { createResult, createValidQuery } from '_utils/create-utils';
 import { isValidNumberQuery } from '_utils/validate-utils';

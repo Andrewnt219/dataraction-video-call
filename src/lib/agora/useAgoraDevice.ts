@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { useAgoraContext, useAgoraDispatch } from '_context/AgoraContext';
 import { useAlertContext } from '_context/AlertContext';
+import { useAgoraContext, useAgoraDispatch } from '_lib/agora/AgoraContext';
 
 type AudioParams = {
   kind: 'audioinput' | 'audiooutput';

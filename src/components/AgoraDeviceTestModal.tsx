@@ -9,7 +9,7 @@ import {
   ModalFooter,
   ModalHeader,
 } from 'reactstrap';
-import { useAgoraHandlers } from '_hooks/agora/useAgoraHandlers';
+import { useAgoraHandlers } from '_lib/agora/useAgoraHandlers';
 import AgoraAudioSelect from './AgoraAudioSelect.tsx/AgoraAudioSelect';
 import AgoraVideoSelect from './AgoraVideoSelect/AgoraVideoSelect';
 const AgoraDeviceTestModal = () => {

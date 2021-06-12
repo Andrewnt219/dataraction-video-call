@@ -21,7 +21,8 @@ import {
   UncontrolledCollapse,
 } from 'reactstrap';
 import { useAlertContext } from '_context/AlertContext';
-import useAgora from '_hooks/agora/useAgora';
+import { useAgoraContext } from '_lib/agora/AgoraContext';
+import { useAgoraHandlers } from '_lib/agora/useAgoraHandlers';
 import AgoraVideoPlayer from '../components/AgoraVideoPlayer/AgoraVideoPlayer';
 
 const AgoraDeviceTestModal = dynamic(
@@ -35,10 +36,9 @@ function Home() {
     query: { token: tokenQuery, channelName: channelNameQuery },
   } = useRouter();
 
-  const {
-    handlers: { state, leave, createRoom, toggleAudio, toggleVideo, joinRoom },
-  } = useAgora();
-
+  const { leave, createRoom, toggleAudio, toggleVideo, joinRoom } =
+    useAgoraHandlers();
+  const state = useAgoraContext();
   const { trigger } = useAlertContext();
 
   const [invitation, setInvitation] = useState<string>('');
