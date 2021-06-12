@@ -247,7 +247,10 @@ export const reducer = (state: State, action: Action): State => {
       switch (kind) {
         case 'audioinput': {
           const mediaDevices = { ...state[kind] };
-          if (!mediaDevices || !mediaDevices.track) return state;
+          const { localAudioTrack } = state;
+
+          if (!localAudioTrack || !mediaDevices || !mediaDevices.track)
+            return state;
 
           const device = mediaDevices.devices.filter(
             (d) => d.deviceId === deviceId
@@ -256,9 +259,11 @@ export const reducer = (state: State, action: Action): State => {
           if (!device) return state;
 
           mediaDevices.track.setDevice(deviceId);
+          localAudioTrack.setDevice(deviceId);
 
           return {
             ...state,
+            localAudioTrack,
             [kind]: {
               ...mediaDevices,
               selectedDevice: device,
@@ -268,6 +273,7 @@ export const reducer = (state: State, action: Action): State => {
 
         case 'audiooutput': {
           const mediaDevices = { ...state[kind] };
+
           if (!mediaDevices || !mediaDevices.track) return state;
 
           const device = mediaDevices.devices.filter(
@@ -277,6 +283,8 @@ export const reducer = (state: State, action: Action): State => {
           if (!device) return state;
 
           mediaDevices.track.setDevice(deviceId);
+          // NOTE not sure if I should set the output to localAudioTrack
+          // localAudioTrack.setDevice(deviceId);
 
           return {
             ...state,
@@ -289,7 +297,10 @@ export const reducer = (state: State, action: Action): State => {
 
         case 'videoinput': {
           const mediaDevices = { ...state[kind] };
-          if (!mediaDevices || !mediaDevices.track) return state;
+          const { localVideoTrack } = state;
+
+          if (!localVideoTrack || !mediaDevices || !mediaDevices.track)
+            return state;
 
           const device = mediaDevices.devices.filter(
             (d) => d.deviceId === deviceId
@@ -298,9 +309,11 @@ export const reducer = (state: State, action: Action): State => {
           if (!device) return state;
 
           mediaDevices.track.setDevice(deviceId);
+          localVideoTrack.setDevice(deviceId);
 
           return {
             ...state,
+            localVideoTrack,
             [kind]: {
               ...mediaDevices,
               selectedDevice: device,
