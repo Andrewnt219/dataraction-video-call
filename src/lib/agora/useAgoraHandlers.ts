@@ -70,6 +70,7 @@ export const useAgoraHandlers = () => {
           .catch(handleError);
 
         dispatch({ type: 'JOIN_ROOM', payload: { channelName, token } });
+        trigger('info', 'Joined room');
       } catch (error) {
         handleError(error);
       }
@@ -80,6 +81,7 @@ export const useAgoraHandlers = () => {
       handleError,
       state.agoraRtc,
       state.client,
+      trigger,
     ]
   );
 
@@ -106,12 +108,20 @@ export const useAgoraHandlers = () => {
           uid: params.userUid?.toString(),
         };
 
+        trigger('info', 'Created room');
+
         await joinRoom(roomOptions);
       } catch (err) {
         handleError(err);
       }
     },
-    [createLocalVideoAndAudioTrack, handleError, joinRoom, state.client]
+    [
+      createLocalVideoAndAudioTrack,
+      handleError,
+      joinRoom,
+      state.client,
+      trigger,
+    ]
   );
 
   // Publish a local track
@@ -128,12 +138,14 @@ export const useAgoraHandlers = () => {
     }
 
     dispatch({ type: 'PUBLISH_TRACKS' });
+    trigger('info', 'Went live!');
   }, [
     dispatch,
     handleError,
     state.client,
     state.localAudioTrack,
     state.localVideoTrack,
+    trigger,
   ]);
 
   // Unpublish a local track
@@ -176,6 +188,8 @@ export const useAgoraHandlers = () => {
           default:
             throw new Error('Invalid track type');
         }
+
+        trigger('info', 'Unpublished');
       } catch (error) {
         handleError(error);
       }
@@ -186,13 +200,13 @@ export const useAgoraHandlers = () => {
       state.client,
       state.localAudioTrack,
       state.localVideoTrack,
+      trigger,
     ]
   );
 
   // Toggle mute for a media type
   const toggleAudio = useCallback(() => {
     dispatch({ type: 'TOGGLE_AUDIO' });
-
     return;
   }, [dispatch]);
 
@@ -209,35 +223,11 @@ export const useAgoraHandlers = () => {
       await client?.leave();
 
       dispatch({ type: 'LEAVE_ROOM' });
+      trigger('info', 'Left room');
     } catch (error) {
       handleError(error);
     }
-  }, [dispatch, handleError, state.client]);
-
-  useEffect(() => {
-    switch (state.roomState) {
-      case 'idle':
-        trigger('info', 'Not in a room');
-        break;
-
-      case 'ready':
-        createLocalVideoAndAudioTrack().then(() =>
-          trigger('info', 'Initialize succesfully')
-        );
-        break;
-
-      case 'live':
-        trigger('info', 'Join room successfully');
-        break;
-
-      case 'error':
-        trigger('danger', 'Something went wrong, please retry');
-        break;
-
-      default:
-        break;
-    }
-  }, [createLocalVideoAndAudioTrack, trigger, state.roomState]);
+  }, [dispatch, handleError, state.client, trigger]);
 
   // Set up listeners for agora's events
   useEffect(() => {
@@ -257,25 +247,27 @@ export const useAgoraHandlers = () => {
       });
     };
 
-    const handleUserUnpublished = (_user: IAgoraRTCRemoteUser) => {
+    const handleUserUnpublished = (user: IAgoraRTCRemoteUser) => {
       dispatch({
         type: 'SET_REMOTE_USER',
         payload: Array.from(client.remoteUsers),
       });
     };
 
-    const handleUserJoined = (__user: IAgoraRTCRemoteUser) => {
+    const handleUserJoined = (user: IAgoraRTCRemoteUser) => {
       dispatch({
         type: 'SET_REMOTE_USER',
         payload: Array.from(client.remoteUsers),
       });
+      trigger('info', `${user.uid} has joined`);
     };
 
-    const handleUserLeft = (__user: IAgoraRTCRemoteUser) => {
+    const handleUserLeft = (user: IAgoraRTCRemoteUser) => {
       dispatch({
         type: 'SET_REMOTE_USER',
         payload: Array.from(client.remoteUsers),
       });
+      trigger('info', `${user.uid} has left`);
     };
 
     client.on('user-published', handleUserPublished);
@@ -289,7 +281,7 @@ export const useAgoraHandlers = () => {
       client.off('user-joined', handleUserJoined);
       client.off('user-left', handleUserLeft);
     };
-  }, [dispatch, handleError, state.client]);
+  }, [dispatch, handleError, state.client, trigger]);
 
   return {
     state,
