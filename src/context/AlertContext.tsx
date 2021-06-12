@@ -1,7 +1,10 @@
 import * as React from 'react';
+import type { Color } from 'reactstrap';
 import { Alert } from 'reactstrap';
+import { uid } from 'uid/single';
+
 type Context = {
-  trigger(type: string, message: React.ReactNode): void;
+  trigger(type: Color, message: React.ReactNode): void;
 };
 const Context = React.createContext<Context | undefined>(undefined);
 
@@ -9,27 +12,16 @@ type ProviderProps = {
   children: React.ReactNode | React.ReactNode[];
 };
 const AlertProvider = ({ children }: ProviderProps) => {
-  const [isVisible, setIsVisible] = React.useState(false);
-  const [message, setMessage] = React.useState<React.ReactNode | null>(null);
-  const [color, setColor] = React.useState('info');
-
-  React.useEffect(() => {
-    let timerId: NodeJS.Timeout;
-    if (isVisible) {
-      timerId = setTimeout(() => setIsVisible(false), 2000);
-    }
-
-    return () => {
-      timerId && clearTimeout(timerId);
-    };
-  }, [isVisible]);
-
-  const onDismiss = () => setIsVisible(false);
+  const [toasts, setToasts] = React.useState<Toast[]>([]);
 
   const trigger: Context['trigger'] = React.useCallback((type, message) => {
-    setIsVisible(true);
-    setMessage(message);
-    setColor(type);
+    setToasts((prev) => [...prev, { message, type, id: uid(8) }]);
+
+    // NOTE don't filter by id, it's weird
+    setTimeout(
+      () => setToasts((prev) => [...prev.filter((toast, index) => index > 0)]),
+      3000
+    );
   }, []);
 
   const value = React.useMemo(() => ({ trigger }), [trigger]);
@@ -38,14 +30,13 @@ const AlertProvider = ({ children }: ProviderProps) => {
     <Context.Provider value={value}>
       {children}
 
-      <Alert
-        color={color}
-        className="fixed bottom-2 right-4"
-        isOpen={isVisible}
-        toggle={onDismiss}
-      >
-        {message}
-      </Alert>
+      <div className="fixed bottom-2 right-4">
+        {toasts.map((toast) => (
+          <Alert key={toast.id} color={toast.type} isOpen={true}>
+            {toast.message}
+          </Alert>
+        ))}
+      </div>
     </Context.Provider>
   );
 };
@@ -61,3 +52,5 @@ const useAlertContext = (): Context => {
 };
 
 export { AlertProvider, useAlertContext };
+
+type Toast = { type: Color; message: React.ReactNode; id: string };
