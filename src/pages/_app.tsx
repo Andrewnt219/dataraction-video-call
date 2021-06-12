@@ -5,7 +5,6 @@ import { AgoraProvider } from '_lib/agora/AgoraContext';
 import '_styles/global.css';
 
 function MyApp({ Component, pageProps }: AppProps) {
-  // TODO #11 create a context for triggering (error) modal
   return (
     <AlertProvider>
       <AgoraProvider>
