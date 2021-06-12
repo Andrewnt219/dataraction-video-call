@@ -43,7 +43,7 @@ function Home() {
   const handleCreateRoomButtonClick = () =>
     createRoom({ channelName: state.channelName });
 
-  const handleClipboardCopyClick = () => () => {
+  const handleClipboardCopyClick = () => {
     navigator.clipboard.writeText(invitation);
     trigger('info', 'Copied to clipboard');
   };
