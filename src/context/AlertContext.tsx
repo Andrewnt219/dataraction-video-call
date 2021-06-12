@@ -3,18 +3,18 @@ import type { Color } from 'reactstrap';
 import { Alert } from 'reactstrap';
 import { uid } from 'uid/single';
 
-type Context = {
-  trigger(type: Color, message: React.ReactNode): void;
-};
 const Context = React.createContext<Context | undefined>(undefined);
 
-type ProviderProps = {
-  children: React.ReactNode | React.ReactNode[];
-};
+/**
+ * @description Context for adding and displaying alerts
+ */
 const AlertProvider = ({ children }: ProviderProps) => {
   const [toasts, setToasts] = React.useState<Toast[]>([]);
 
-  const trigger: Context['trigger'] = React.useCallback((type, message) => {
+  /**
+   * @description adding an alert to list and time its removal
+   */
+  const trigger = React.useCallback((type: Color, message: React.ReactNode) => {
     setToasts((prev) => [...prev, { message, type, id: uid(8) }]);
 
     // NOTE don't filter by id, it's weird
@@ -53,4 +53,10 @@ const useAlertContext = (): Context => {
 
 export { AlertProvider, useAlertContext };
 
+type Context = {
+  trigger(type: Color, message: React.ReactNode): void;
+};
+type ProviderProps = {
+  children: React.ReactNode | React.ReactNode[];
+};
 type Toast = { type: Color; message: React.ReactNode; id: string };

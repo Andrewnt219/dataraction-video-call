@@ -20,7 +20,8 @@ import {
   UncontrolledCollapse,
 } from 'reactstrap';
 import { useAlertContext } from '_context/AlertContext';
-import { useInvitationLink } from '_hooks/useInvitationLink';
+import { useInvitationLinkWriter } from '_hooks/useInvitationLink';
+import { useInvitationLinkReader } from '_hooks/useInvitationLinkReader';
 import { useAgoraContext } from '_lib/agora/AgoraContext';
 import { useAgoraHandlers } from '_lib/agora/useAgoraHandlers';
 import AgoraVideoPlayer from '../components/AgoraVideoPlayer/AgoraVideoPlayer';
@@ -32,13 +33,13 @@ const AgoraDeviceTestModal = dynamic(
   }
 );
 function Home() {
-  const { leave, createRoom, toggleAudio, toggleVideo, joinRoom } =
-    useAgoraHandlers();
+  const { leave, createRoom, toggleAudio, toggleVideo } = useAgoraHandlers();
   const state = useAgoraContext();
 
   const { trigger } = useAlertContext();
 
-  const invitation = useInvitationLink();
+  const invitation = useInvitationLinkWriter();
+  useInvitationLinkReader();
 
   const handleCreateRoomButtonClick = () =>
     createRoom({ channelName: state.channelName });

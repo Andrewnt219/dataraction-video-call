@@ -5,7 +5,9 @@ import { createResultError } from '../../utils/create-utils';
 /* -------------------------------------------------------------------------- */
 /*                                     API                                    */
 /* -------------------------------------------------------------------------- */
-/* -------------------------------------------------------------------------- */
+/**
+ * @description Handle unexpected error from api
+ */
 export function errorHandler(
   req: NextApiRequest,
   res: NextApiResponse,
@@ -73,6 +75,9 @@ export const apiHanler =
 /* -------------------------------------------------------------------------- */
 /*                               CREATE RESPONSE                              */
 /* -------------------------------------------------------------------------- */
+/**
+ * @description factory for error response templates
+ */
 export const createErrorResponse =
   (statusCode: number, messagePrefix = '') =>
   (res: NextApiResponse, message: string | null) =>

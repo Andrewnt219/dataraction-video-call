@@ -2,16 +2,14 @@ import * as React from 'react';
 import { useReducer } from 'react';
 import * as agoraSlice from '_lib/agora/agora-store';
 import { useAlertContext } from '../../context/AlertContext';
-type Context = agoraSlice.State;
 const Context = React.createContext<Context | undefined>(undefined);
 
-type DispatchContext = React.Dispatch<agoraSlice.Action>;
 const DispatchContext =
   React.createContext<DispatchContext | undefined>(undefined);
 
-type ProviderProps = {
-  children: React.ReactNode | React.ReactNode[];
-};
+/**
+ * @description provides the agora-related app's state and actions
+ */
 const AgoraProvider = ({ children }: ProviderProps) => {
   const [state, dispatch] = useReducer(
     agoraSlice.reducer,
@@ -20,6 +18,7 @@ const AgoraProvider = ({ children }: ProviderProps) => {
 
   const { trigger } = useAlertContext();
 
+  /* client-side import agora */
   React.useEffect(() => {
     import('agora-rtc-sdk-ng')
       .then(({ default: AgoraRTC }) => {
@@ -64,3 +63,9 @@ const useAgoraDispatch = (): DispatchContext => {
 };
 
 export { AgoraProvider, useAgoraContext, useAgoraDispatch };
+
+type Context = agoraSlice.State;
+type DispatchContext = React.Dispatch<agoraSlice.Action>;
+type ProviderProps = {
+  children: React.ReactNode | React.ReactNode[];
+};

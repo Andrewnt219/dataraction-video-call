@@ -1,15 +1,11 @@
-import { useRouter } from 'next/router';
 import { useEffect, useState } from 'react';
 import { useAgoraContext } from '_lib/agora/AgoraContext';
-import { useAgoraHandlers } from '_lib/agora/useAgoraHandlers';
 
-export const useInvitationLink = () => {
+/**
+ * @description handle creating link to room
+ */
+export const useInvitationLinkWriter = () => {
   const state = useAgoraContext();
-  const { joinRoom } = useAgoraHandlers();
-
-  const {
-    query: { token: tokenQuery, channelName: channelNameQuery },
-  } = useRouter();
 
   const [invitation, setInvitation] = useState<string>('');
 
@@ -36,16 +32,6 @@ export const useInvitationLink = () => {
     state.localVideoTrack,
     state.channelName,
   ]);
-
-  useEffect(() => {
-    if (typeof tokenQuery !== 'string' || typeof channelNameQuery !== 'string')
-      return;
-    debugger;
-    joinRoom({
-      token: decodeURIComponent(tokenQuery),
-      channelName: decodeURIComponent(channelNameQuery),
-    });
-  }, [channelNameQuery, joinRoom, tokenQuery]);
 
   return invitation;
 };
