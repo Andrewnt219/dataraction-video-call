@@ -8,33 +8,12 @@ import type {
 import { ActionWithouPayload, ActionWithPayload, ErrorMessage } from '_common';
 import { isCameraTrack, isMicrophoneTrack } from './agora-utils';
 
-const emptyDevices: AudioInputDevices & AudioOutputDevices & VideoInputDevices =
-  {
-    devices: [],
-    track: undefined,
-    selectedDevice: null,
-  };
-export type State = {
-  agoraRtc: IAgoraRTC | null;
-  client: IAgoraRTCClient | null;
-
-  localVideoTrack: ICameraVideoTrack | undefined;
-  localAudioTrack: IMicrophoneAudioTrack | undefined;
-  isEnabledVideo: boolean;
-  isEnabledAudio: boolean;
-
-  token: string | null;
-  channelName: string | undefined;
-  remoteUsers: IAgoraRTCRemoteUser[];
-  roomState: RoomState;
-
-  audioinput: AudioInputDevices;
-  audiooutput: AudioOutputDevices;
-  videoinput: VideoInputDevices;
-
-  isLoading: boolean;
-  error: ErrorMessage | null;
+const emptyDevices: Devices = {
+  devices: [],
+  track: undefined,
+  selectedDevice: null,
 };
+
 export const initialState: State = {
   agoraRtc: null,
   client: null,
@@ -56,38 +35,6 @@ export const initialState: State = {
   isLoading: false,
   error: null,
 };
-
-export type Action =
-  | ActionWithPayload<'INIT_RTC', IAgoraRTC>
-  | ActionWithPayload<'INIT_CLIENT', IAgoraRTCClient>
-  | ActionWithPayload<
-      'INIT_TRACKS',
-      { audio: IMicrophoneAudioTrack; video: ICameraVideoTrack }
-    >
-  | ActionWithPayload<'SET_AUDIO_TRACK', IMicrophoneAudioTrack>
-  | ActionWithPayload<'SET_VIDEO_TRACK', ICameraVideoTrack>
-  | ActionWithPayload<'JOIN_ROOM', { channelName: string; token: string }>
-  | ActionWithPayload<'CREATE_ROOM', { channelName: string; token: string }>
-  | ActionWithPayload<'SET_REMOTE_USER', IAgoraRTCRemoteUser[]>
-  | ActionWithouPayload<'PUBLISH_TRACKS'>
-  | ActionWithouPayload<'UNPUBLISH_TRACKS'>
-  | ActionWithouPayload<'UNPUBLISH_AUDIO_INPUT'>
-  | ActionWithouPayload<'UNPUBLISH_VIDEO_INPUT'>
-  | ActionWithouPayload<'TOGGLE_AUDIO'>
-  | ActionWithouPayload<'TOGGLE_VIDEO'>
-  | ActionWithouPayload<'LEAVE_ROOM'>
-  | ActionWithPayload<'SET_DEVICE', { deviceId: string; kind: MediaDeviceKind }>
-  | ActionWithPayload<
-      'INIT_DEVICES',
-      {
-        devices: MediaDeviceInfo[];
-        kind: MediaDeviceKind;
-        track: IMicrophoneAudioTrack | ICameraVideoTrack;
-      }
-    >
-  | ActionWithouPayload<'START_LOADING'>
-  | ActionWithouPayload<'STOP_LOADING'>
-  | ActionWithPayload<'ERROR', ErrorMessage>;
 
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
@@ -243,7 +190,6 @@ export const reducer = (state: State, action: Action): State => {
     case 'SET_DEVICE': {
       const { kind, deviceId } = action.payload;
 
-      // NOTE This switch is purely for type-safety of returned State ([kind])
       switch (kind) {
         case 'audioinput': {
           const mediaDevices = { ...state[kind] };
@@ -339,6 +285,59 @@ export const reducer = (state: State, action: Action): State => {
       throw new Error('Invalid action');
   }
 };
+export type State = {
+  agoraRtc: IAgoraRTC | null;
+  client: IAgoraRTCClient | null;
+
+  localVideoTrack: ICameraVideoTrack | undefined;
+  localAudioTrack: IMicrophoneAudioTrack | undefined;
+  isEnabledVideo: boolean;
+  isEnabledAudio: boolean;
+
+  token: string | null;
+  channelName: string | undefined;
+  remoteUsers: IAgoraRTCRemoteUser[];
+  roomState: RoomState;
+
+  audioinput: AudioInputDevices;
+  audiooutput: AudioOutputDevices;
+  videoinput: VideoInputDevices;
+
+  isLoading: boolean;
+  error: ErrorMessage | null;
+};
+
+export type Action =
+  | ActionWithPayload<'INIT_RTC', IAgoraRTC>
+  | ActionWithPayload<'INIT_CLIENT', IAgoraRTCClient>
+  | ActionWithPayload<
+      'INIT_TRACKS',
+      { audio: IMicrophoneAudioTrack; video: ICameraVideoTrack }
+    >
+  | ActionWithPayload<'SET_AUDIO_TRACK', IMicrophoneAudioTrack>
+  | ActionWithPayload<'SET_VIDEO_TRACK', ICameraVideoTrack>
+  | ActionWithPayload<'JOIN_ROOM', { channelName: string; token: string }>
+  | ActionWithPayload<'CREATE_ROOM', { channelName: string; token: string }>
+  | ActionWithPayload<'SET_REMOTE_USER', IAgoraRTCRemoteUser[]>
+  | ActionWithouPayload<'PUBLISH_TRACKS'>
+  | ActionWithouPayload<'UNPUBLISH_TRACKS'>
+  | ActionWithouPayload<'UNPUBLISH_AUDIO_INPUT'>
+  | ActionWithouPayload<'UNPUBLISH_VIDEO_INPUT'>
+  | ActionWithouPayload<'TOGGLE_AUDIO'>
+  | ActionWithouPayload<'TOGGLE_VIDEO'>
+  | ActionWithouPayload<'LEAVE_ROOM'>
+  | ActionWithPayload<'SET_DEVICE', { deviceId: string; kind: MediaDeviceKind }>
+  | ActionWithPayload<
+      'INIT_DEVICES',
+      {
+        devices: MediaDeviceInfo[];
+        kind: MediaDeviceKind;
+        track: IMicrophoneAudioTrack | ICameraVideoTrack;
+      }
+    >
+  | ActionWithouPayload<'START_LOADING'>
+  | ActionWithouPayload<'STOP_LOADING'>
+  | ActionWithPayload<'ERROR', ErrorMessage>;
 
 type RoomState = 'idle' | 'ready' | 'live' | 'error';
 
@@ -359,3 +358,5 @@ type VideoInputDevices = {
   track: ICameraVideoTrack | undefined;
   selectedDevice: MediaDeviceInfo | null;
 };
+
+type Devices = AudioInputDevices & AudioOutputDevices & VideoInputDevices;

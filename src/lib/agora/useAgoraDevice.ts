@@ -2,21 +2,18 @@ import { useEffect } from 'react';
 import { useAlertContext } from '_context/AlertContext';
 import { useAgoraContext, useAgoraDispatch } from '_lib/agora/AgoraContext';
 
-type AudioParams = {
-  kind: 'audioinput' | 'audiooutput';
-};
-
-type VideoParams = {
-  kind: 'videoinput';
-};
-
-export const useAgoraDevice = ({ kind }: AudioParams | VideoParams) => {
+/**
+ * @description initialize a type of media device
+ */
+export const useAgoraDevice = ({ kind }: { kind: MediaDeviceKind }) => {
   const state = useAgoraContext();
   const dispatch = useAgoraDispatch();
   const { trigger } = useAlertContext();
 
   useEffect(() => {
     const agoraRtc = state.agoraRtc;
+
+    /* Update store with all the availble devices for a kind */
     const getDevices = async () => {
       if (!agoraRtc) return;
 
@@ -33,6 +30,7 @@ export const useAgoraDevice = ({ kind }: AudioParams | VideoParams) => {
       dispatch({ type: 'INIT_DEVICES', payload: { devices, kind, track } });
     };
 
+    /* Create a matching track for the passed kind */
     const getTrack = async (device: MediaDeviceInfo) => {
       if (!agoraRtc) return;
 

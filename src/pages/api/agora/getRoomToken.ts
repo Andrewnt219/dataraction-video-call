@@ -10,14 +10,9 @@ import { apiHanler } from '_server/utils/api-utils';
 import { createResult, createValidQuery } from '_utils/create-utils';
 import { isValidNumberQuery } from '_utils/validate-utils';
 
-export type Query = {
-  channelName?: string;
-  userUid?: number;
-  role?: 'publisher' | 'subscriber';
-  expireTime?: number;
-};
-export type Data = ResultSuccess<{ token: string; channelName: string }>;
-
+/**
+ * create a room's token for agora
+ */
 const get: NextApiHandler<Data | ResultError> = (req, res) => {
   const { query } = req;
   const validatedQuery = validateQuery(query, res);
@@ -64,3 +59,11 @@ function validateQuery(
 }
 
 export default apiHanler({ get });
+
+export type Query = {
+  channelName?: string;
+  userUid?: number;
+  role?: 'publisher' | 'subscriber';
+  expireTime?: number;
+};
+export type Data = ResultSuccess<{ token: string; channelName: string }>;

@@ -10,12 +10,17 @@ import { NEXT_PUBLIC_AGORA_APP_ID } from '_lib/agora/agora-constants';
 import { useAgoraContext, useAgoraDispatch } from '_lib/agora/AgoraContext';
 import type * as ApiAgoraGetRoomToken from '_pages/api/agora/getRoomToken';
 import { getErrorMessage } from '_utils/convert-utils';
+
+/**
+ * @description All the methods to sync agora-sdk with agora-store
+ */
 export const useAgoraHandlers = () => {
   const { trigger } = useAlertContext();
 
   const state = useAgoraContext();
   const dispatch = useAgoraDispatch();
 
+  /* Handle error from agora-sdk */
   const handleError = useCallback(
     (err: Error) => {
       let message = '';
@@ -29,7 +34,7 @@ export const useAgoraHandlers = () => {
     [dispatch, trigger]
   );
 
-  // Ask for both video and microphone permission
+  /* Initialize camera and microphone tracks in store  */
   const createLocalVideoAndAudioTrack = useCallback(
     async (config?: TrackConfig): Promise<void> => {
       const agoraRtc = state.agoraRtc;
@@ -53,7 +58,7 @@ export const useAgoraHandlers = () => {
     [dispatch, handleError, state.agoraRtc]
   );
 
-  // join an existing room
+  /* Join an existing room */
   const joinRoom: JoinRoom = useCallback(
     async ({ channelName, token, uid }) => {
       const agoraRtc = state.agoraRtc;
@@ -85,7 +90,7 @@ export const useAgoraHandlers = () => {
     ]
   );
 
-  // Create a new room with token
+  /* Create a new room with server token */
   const createRoom: CreateRoomHandler = useCallback(
     async (params) => {
       const client = state.client;
@@ -124,7 +129,7 @@ export const useAgoraHandlers = () => {
     ]
   );
 
-  // Publish a local track
+  /* Publish all current tracks */
   const publishTracks: PublishTracksHandler = useCallback(async () => {
     const client = state.client;
     if (!client) return;
@@ -148,7 +153,7 @@ export const useAgoraHandlers = () => {
     trigger,
   ]);
 
-  // Unpublish a local track
+  /* Unpublish a track */
   const unpublishTracks: UnpublishTracksHandler = useCallback(
     async (trackType) => {
       const client = state.client;
@@ -204,17 +209,18 @@ export const useAgoraHandlers = () => {
     ]
   );
 
-  // Toggle mute for a media type
+  /* Toggle mute for audio input */
   const toggleAudio = useCallback(() => {
     dispatch({ type: 'TOGGLE_AUDIO' });
     return;
   }, [dispatch]);
 
+  /* Toggle mute for audio output */
   const toggleVideo = useCallback(() => {
     dispatch({ type: 'TOGGLE_VIDEO' });
   }, [dispatch]);
 
-  // Leave the room and reset state
+  /* Leave a room and reset room's state */
   const leave: LeaveHandler = useCallback(async () => {
     const client = state.client;
     if (!client) return;
@@ -229,7 +235,7 @@ export const useAgoraHandlers = () => {
     }
   }, [dispatch, handleError, state.client, trigger]);
 
-  // Set up listeners for agora's events
+  /*  Set up listenners for room's event */
   useEffect(() => {
     const client = state.client;
     if (!client) return;
