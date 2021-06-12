@@ -6,7 +6,14 @@ import type {
   IMicrophoneAudioTrack,
 } from 'agora-rtc-sdk-ng';
 import { ActionWithouPayload, ActionWithPayload, ErrorMessage } from '_common';
+import { isCameraTrack, isMicrophoneTrack } from './agora-utils';
 
+const emptyDevices: AudioInputDevices & AudioOutputDevices & VideoInputDevices =
+  {
+    devices: [],
+    track: undefined,
+    selectedDevice: null,
+  };
 export type State = {
   agoraRtc: IAgoraRTC | null;
   client: IAgoraRTCClient | null;
@@ -20,6 +27,10 @@ export type State = {
   channelName: string | undefined;
   remoteUsers: IAgoraRTCRemoteUser[];
   roomState: RoomState;
+
+  audioinput: AudioInputDevices;
+  audiooutput: AudioOutputDevices;
+  videoinput: VideoInputDevices;
 
   isLoading: boolean;
   error: ErrorMessage | null;
@@ -37,6 +48,10 @@ export const initialState: State = {
   channelName: undefined,
   remoteUsers: [],
   roomState: 'idle',
+
+  audioinput: { ...emptyDevices },
+  audiooutput: { ...emptyDevices },
+  videoinput: { ...emptyDevices },
 
   isLoading: false,
   error: null,
@@ -61,6 +76,15 @@ export type Action =
   | ActionWithouPayload<'TOGGLE_AUDIO'>
   | ActionWithouPayload<'TOGGLE_VIDEO'>
   | ActionWithouPayload<'LEAVE_ROOM'>
+  | ActionWithPayload<'SET_DEVICE', { deviceId: string; kind: MediaDeviceKind }>
+  | ActionWithPayload<
+      'INIT_DEVICES',
+      {
+        devices: MediaDeviceInfo[];
+        kind: MediaDeviceKind;
+        track: IMicrophoneAudioTrack | ICameraVideoTrack;
+      }
+    >
   | ActionWithouPayload<'START_LOADING'>
   | ActionWithouPayload<'STOP_LOADING'>
   | ActionWithPayload<'ERROR', ErrorMessage>;
@@ -86,7 +110,6 @@ export const reducer = (state: State, action: Action): State => {
         localVideoTrack: action.payload.video,
       };
 
-    case 'CREATE_ROOM':
     case 'JOIN_ROOM':
       return {
         ...state,
@@ -176,6 +199,121 @@ export const reducer = (state: State, action: Action): State => {
       };
     }
 
+    case 'INIT_DEVICES': {
+      const { devices, kind, track } = action.payload;
+
+      switch (kind) {
+        case 'audioinput': {
+          return {
+            ...state,
+            [kind]: {
+              devices,
+              track: isMicrophoneTrack(track) ? track : undefined,
+              selectedDevice: devices[0],
+            },
+          };
+        }
+
+        case 'audiooutput': {
+          return {
+            ...state,
+            [kind]: {
+              devices,
+              track: isMicrophoneTrack(track) ? track : undefined,
+              selectedDevice: devices[0],
+            },
+          };
+        }
+
+        case 'videoinput': {
+          return {
+            ...state,
+            [kind]: {
+              devices,
+              track: isCameraTrack(track) ? track : undefined,
+              selectedDevice: devices[0],
+            },
+          };
+        }
+
+        default:
+          throw new Error("Invalid device's kind");
+      }
+    }
+
+    case 'SET_DEVICE': {
+      const { kind, deviceId } = action.payload;
+
+      // NOTE This switch is purely for type-safety of returned State ([kind])
+      switch (kind) {
+        case 'audioinput': {
+          const mediaDevices = { ...state[kind] };
+          if (!mediaDevices || !mediaDevices.track) return state;
+
+          const device = mediaDevices.devices.filter(
+            (d) => d.deviceId === deviceId
+          )[0];
+
+          if (!device) return state;
+
+          mediaDevices.track.setDevice(deviceId);
+
+          return {
+            ...state,
+            [kind]: {
+              ...mediaDevices,
+              selectedDevice: device,
+            },
+          };
+        }
+
+        case 'audiooutput': {
+          const mediaDevices = { ...state[kind] };
+          if (!mediaDevices || !mediaDevices.track) return state;
+
+          const device = mediaDevices.devices.filter(
+            (d) => d.deviceId === deviceId
+          )[0];
+
+          if (!device) return state;
+
+          mediaDevices.track.setDevice(deviceId);
+
+          return {
+            ...state,
+            [kind]: {
+              ...mediaDevices,
+              selectedDevice: device,
+            },
+          };
+        }
+
+        case 'videoinput': {
+          const mediaDevices = { ...state[kind] };
+          if (!mediaDevices || !mediaDevices.track) return state;
+
+          const device = mediaDevices.devices.filter(
+            (d) => d.deviceId === deviceId
+          )[0];
+
+          if (!device) return state;
+
+          mediaDevices.track.setDevice(deviceId);
+
+          return {
+            ...state,
+            [kind]: {
+              ...mediaDevices,
+              selectedDevice: device,
+            },
+          };
+        }
+
+        default:
+          throw new Error("Invalid device's kind");
+      }
+    }
+
     case 'START_LOADING':
       return { ...state, isLoading: true, error: null };
 
@@ -191,3 +329,21 @@ export const reducer = (state: State, action: Action): State => {
 };
 
 type RoomState = 'idle' | 'ready' | 'live' | 'error';
+
+type AudioInputDevices = {
+  devices: MediaDeviceInfo[];
+  track: IMicrophoneAudioTrack | undefined;
+  selectedDevice: MediaDeviceInfo | null;
+};
+
+type AudioOutputDevices = {
+  devices: MediaDeviceInfo[];
+  track: IMicrophoneAudioTrack | undefined;
+  selectedDevice: MediaDeviceInfo | null;
+};
+
+type VideoInputDevices = {
+  devices: MediaDeviceInfo[];
+  track: ICameraVideoTrack | undefined;
+  selectedDevice: MediaDeviceInfo | null;
+};

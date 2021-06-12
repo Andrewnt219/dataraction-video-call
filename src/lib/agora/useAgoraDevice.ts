@@ -1,47 +1,22 @@
-import type {
-  IAgoraRTC,
-  ICameraVideoTrack,
-  IMicrophoneAudioTrack,
-} from 'agora-rtc-sdk-ng';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { useAgoraContext, useAgoraDispatch } from '_context/AgoraContext';
+import { useAlertContext } from '_context/AlertContext';
 
 type AudioParams = {
   kind: 'audioinput' | 'audiooutput';
-
-  agoraRtc: IAgoraRTC | null;
 };
 
 type VideoParams = {
   kind: 'videoinput';
-
-  agoraRtc: IAgoraRTC | null;
 };
 
-export const useAgoraDevice = ({
-  agoraRtc,
-  kind,
-}: AudioParams | VideoParams) => {
-  const [availableDevices, setAvailableDevices] = useState<MediaDeviceInfo[]>(
-    []
-  );
-  const [selectedDevice, setSelectedDevice] =
-    useState<MediaDeviceInfo | null>(null);
-  const [track, setTrack] =
-    useState<ICameraVideoTrack | IMicrophoneAudioTrack>();
-
-  const selectDeviceById = (deviceId: string) => {
-    if (!track) throw new Error("Local track doesn't exist");
-
-    const device = availableDevices.find(
-      (device) => device.deviceId === deviceId
-    );
-    if (!device) throw new Error("Invalid device's id");
-
-    setSelectedDevice(device);
-    track.setDevice(device.deviceId);
-  };
+export const useAgoraDevice = ({ kind }: AudioParams | VideoParams) => {
+  const state = useAgoraContext();
+  const dispatch = useAgoraDispatch();
+  const { trigger } = useAlertContext();
 
   useEffect(() => {
+    const agoraRtc = state.agoraRtc;
     const getDevices = async () => {
       if (!agoraRtc) return;
 
@@ -50,13 +25,12 @@ export const useAgoraDevice = ({
       );
 
       const selectedDevice = devices[0];
-
-      if (!selectedDevice) throw new Error('No device found');
+      if (!selectedDevice) trigger('danger', 'No device found');
 
       const track = await getTrack(selectedDevice);
+      if (!track) return;
 
-      setTrack(track);
-      setAvailableDevices(devices);
+      dispatch({ type: 'INIT_DEVICES', payload: { devices, kind, track } });
     };
 
     const getTrack = async (device: MediaDeviceInfo) => {
@@ -68,13 +42,11 @@ export const useAgoraDevice = ({
           return agoraRtc.createMicrophoneAudioTrack({
             microphoneId: device.deviceId,
           });
-          break;
 
         case 'videoinput':
           return agoraRtc.createCameraVideoTrack({
             cameraId: device.deviceId,
           });
-          break;
 
         default:
           throw new Error('Invalid kind');
@@ -82,12 +54,5 @@ export const useAgoraDevice = ({
     };
 
     void getDevices();
-  }, [agoraRtc, kind]);
-
-  return {
-    availableDevices,
-    track,
-    selectDeviceById,
-    selectedDevice,
-  };
+  }, [dispatch, kind, state.agoraRtc, trigger]);
 };

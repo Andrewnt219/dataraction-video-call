@@ -7,21 +7,22 @@ import {
   InputGroupText,
   Progress,
 } from 'reactstrap';
-import { useAgoraContext } from '_context/AgoraContext';
+import { useAgoraContext, useAgoraDispatch } from '_context/AgoraContext';
 import { useAgoraAudioSelect } from './useAgoraAudioSelect';
 
 type Props = {
   hidePreview?: boolean;
 };
 const AgoraAudioSelect = ({ hidePreview }: Props) => {
-  const { audioInput, volumeLevel } = useAgoraAudioSelect(hidePreview);
-  const { localAudioTrack } = useAgoraContext();
+  const { volumeLevel } = useAgoraAudioSelect(hidePreview);
+  const state = useAgoraContext();
+  const dispatch = useAgoraDispatch();
 
   const handleAudioInputChange: ChangeEventHandler<HTMLInputElement> = (e) => {
-    const deviceId = e.target.value;
-
-    audioInput.selectDeviceById(deviceId);
-    localAudioTrack?.setDevice(deviceId);
+    dispatch({
+      type: 'SET_DEVICE',
+      payload: { kind: 'audioinput', deviceId: e.target.value },
+    });
   };
 
   return (
@@ -34,7 +35,7 @@ const AgoraAudioSelect = ({ hidePreview }: Props) => {
         </InputGroupAddon>
 
         <Input type="select" onChange={handleAudioInputChange}>
-          {audioInput.availableDevices.map((device) => (
+          {state.audioinput.devices.map((device) => (
             <option value={device.deviceId} key={device.deviceId}>
               {device.label}
             </option>

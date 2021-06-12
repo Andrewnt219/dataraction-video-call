@@ -2,19 +2,25 @@ import AgoraVideoPlayer from 'components/AgoraVideoPlayer/AgoraVideoPlayer';
 import React, { ChangeEventHandler } from 'react';
 import { FaCamera } from 'react-icons/fa';
 import { Input, InputGroup, InputGroupAddon, InputGroupText } from 'reactstrap';
-import { useAgoraVideoSelect } from './useAgoraVideoSelect';
+import { useAgoraContext, useAgoraDispatch } from '_context/AgoraContext';
+import { useAgoraDevice } from '_lib/agora/useAgoraDevice';
 
 type Props = {
   hidePreview?: boolean;
 };
 const AgoraVideoSelect = ({ hidePreview = false }: Props) => {
-  const { agoraContext, videoInput } = useAgoraVideoSelect();
+  useAgoraDevice({
+    kind: 'videoinput',
+  });
+
+  const state = useAgoraContext();
+  const dispatch = useAgoraDispatch();
 
   const handleVideoChange: ChangeEventHandler<HTMLInputElement> = (e) => {
-    const deviceId = e.target.value;
-
-    videoInput.selectDeviceById(deviceId);
-    agoraContext.handlers.localVideoTrack?.setDevice(deviceId);
+    dispatch({
+      type: 'SET_DEVICE',
+      payload: { deviceId: e.target.value, kind: 'videoinput' },
+    });
   };
 
   return (
@@ -27,7 +33,7 @@ const AgoraVideoSelect = ({ hidePreview = false }: Props) => {
         </InputGroupAddon>
 
         <Input type="select" onChange={handleVideoChange}>
-          {videoInput.availableDevices.map((device) => (
+          {state.videoinput.devices.map((device) => (
             <option value={device.deviceId} key={device.deviceId}>
               {device.label}
             </option>
@@ -39,7 +45,7 @@ const AgoraVideoSelect = ({ hidePreview = false }: Props) => {
         <div className="h-60 w-full mt-2">
           <AgoraVideoPlayer
             audioTrack={undefined}
-            videoTrack={videoInput.track}
+            videoTrack={state.videoinput.track}
           />
         </div>
       )}
