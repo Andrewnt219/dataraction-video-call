@@ -34,7 +34,11 @@ const AgoraAudioSelect = ({ hidePreview }: Props) => {
           </InputGroupText>
         </InputGroupAddon>
 
-        <Input type="select" onChange={handleAudioInputChange}>
+        <Input
+          type="select"
+          value={state.audioinput.selectedDevice?.deviceId}
+          onChange={handleAudioInputChange}
+        >
           {state.audioinput.devices.map((device) => (
             <option value={device.deviceId} key={device.deviceId}>
               {device.label}
