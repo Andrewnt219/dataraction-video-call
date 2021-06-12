@@ -1,10 +1,9 @@
 import type {
   CameraVideoTrackInitConfig,
-  IAgoraRTCRemoteUser,
   MicrophoneAudioTrackInitConfig,
 } from 'agora-rtc-sdk-ng';
 import axios from 'axios';
-import { useCallback, useEffect } from 'react';
+import { useCallback } from 'react';
 import { useAlertContext } from '_context/AlertContext';
 import { NEXT_PUBLIC_AGORA_APP_ID } from '_lib/agora/agora-constants';
 import { useAgoraContext, useAgoraDispatch } from '_lib/agora/AgoraContext';
@@ -233,60 +232,6 @@ export const useAgoraHandlers = () => {
     } catch (error) {
       handleError(error);
     }
-  }, [dispatch, handleError, state.client, trigger]);
-
-  /*  Set up listenners for room's event */
-  useEffect(() => {
-    const client = state.client;
-    if (!client) return;
-
-    dispatch({ type: 'SET_REMOTE_USER', payload: client.remoteUsers });
-
-    const handleUserPublished = async (
-      user: IAgoraRTCRemoteUser,
-      mediaType: 'audio' | 'video'
-    ) => {
-      await client.subscribe(user, mediaType).catch(handleError);
-      dispatch({
-        type: 'SET_REMOTE_USER',
-        payload: Array.from(client.remoteUsers),
-      });
-    };
-
-    const handleUserUnpublished = (user: IAgoraRTCRemoteUser) => {
-      dispatch({
-        type: 'SET_REMOTE_USER',
-        payload: Array.from(client.remoteUsers),
-      });
-    };
-
-    const handleUserJoined = (user: IAgoraRTCRemoteUser) => {
-      dispatch({
-        type: 'SET_REMOTE_USER',
-        payload: Array.from(client.remoteUsers),
-      });
-      trigger('info', `${user.uid} has joined`);
-    };
-
-    const handleUserLeft = (user: IAgoraRTCRemoteUser) => {
-      dispatch({
-        type: 'SET_REMOTE_USER',
-        payload: Array.from(client.remoteUsers),
-      });
-      trigger('info', `${user.uid} has left`);
-    };
-
-    client.on('user-published', handleUserPublished);
-    client.on('user-unpublished', handleUserUnpublished);
-    client.on('user-joined', handleUserJoined);
-    client.on('user-left', handleUserLeft);
-
-    return () => {
-      client.off('user-published', handleUserPublished);
-      client.off('user-unpublished', handleUserUnpublished);
-      client.off('user-joined', handleUserJoined);
-      client.off('user-left', handleUserLeft);
-    };
   }, [dispatch, handleError, state.client, trigger]);
 
   return {

@@ -1,3 +1,4 @@
+import { IAgoraRTCRemoteUser } from 'agora-rtc-sdk-ng';
 import * as React from 'react';
 import { useReducer } from 'react';
 import * as agoraSlice from '_lib/agora/agora-store';
@@ -32,6 +33,63 @@ const AgoraProvider = ({ children }: ProviderProps) => {
       })
       .catch(() => trigger('danger', 'Fail to install Agora'));
   }, [dispatch, trigger]);
+
+  /*  Set up listenners for room's event */
+  React.useEffect(() => {
+    const client = state.client;
+    console.log(client);
+    if (!client) return;
+
+    dispatch({ type: 'SET_REMOTE_USER', payload: client.remoteUsers });
+
+    const handleUserPublished = async (
+      user: IAgoraRTCRemoteUser,
+      mediaType: 'audio' | 'video'
+    ) => {
+      await client
+        .subscribe(user, mediaType)
+        .catch((err) => trigger('danger', err.message));
+      dispatch({
+        type: 'SET_REMOTE_USER',
+        payload: Array.from(client.remoteUsers),
+      });
+    };
+
+    const handleUserUnpublished = (user: IAgoraRTCRemoteUser) => {
+      dispatch({
+        type: 'SET_REMOTE_USER',
+        payload: Array.from(client.remoteUsers),
+      });
+    };
+
+    const handleUserJoined = (user: IAgoraRTCRemoteUser) => {
+      dispatch({
+        type: 'SET_REMOTE_USER',
+        payload: Array.from(client.remoteUsers),
+      });
+      trigger('info', `${user.uid} has joined`);
+    };
+
+    const handleUserLeft = (user: IAgoraRTCRemoteUser) => {
+      dispatch({
+        type: 'SET_REMOTE_USER',
+        payload: Array.from(client.remoteUsers),
+      });
+      trigger('info', `${user.uid} has left`);
+    };
+
+    client.on('user-published', handleUserPublished);
+    client.on('user-unpublished', handleUserUnpublished);
+    client.on('user-joined', handleUserJoined);
+    client.on('user-left', handleUserLeft);
+
+    return () => {
+      client.off('user-published', handleUserPublished);
+      client.off('user-unpublished', handleUserUnpublished);
+      client.off('user-joined', handleUserJoined);
+      client.off('user-left', handleUserLeft);
+    };
+  }, [state.client, dispatch, trigger]);
 
   return (
     <Context.Provider value={state}>
