@@ -164,10 +164,9 @@ export const reducer = (state: State, action: Action): State => {
 
     case 'TOGGLE_VIDEO': {
       const { localVideoTrack } = state;
-
       if (!localVideoTrack) return state;
 
-      localVideoTrack.setEnabled(!state.isEnabledAudio);
+      localVideoTrack.setEnabled(!state.isEnabledVideo);
       return {
         ...state,
         localVideoTrack,
