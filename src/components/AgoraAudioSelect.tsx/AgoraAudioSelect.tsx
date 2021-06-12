@@ -7,7 +7,7 @@ import {
   InputGroupText,
   Progress,
 } from 'reactstrap';
-import { useAgoraContext, useAgoraDispatch } from '_context/AgoraContext';
+import { useAgoraContext, useAgoraDispatch } from '_lib/agora/AgoraContext';
 import { useAgoraAudioSelect } from './useAgoraAudioSelect';
 
 type Props = {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useAgoraContext } from '_context/AgoraContext';
+import { useAgoraContext } from '_lib/agora/AgoraContext';
 import { useAgoraDevice } from '_lib/agora/useAgoraDevice';
 
 export const useAgoraAudioSelect = (hidePreview = false) => {

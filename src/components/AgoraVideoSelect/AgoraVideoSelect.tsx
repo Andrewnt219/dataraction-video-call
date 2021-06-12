@@ -2,7 +2,7 @@ import AgoraVideoPlayer from 'components/AgoraVideoPlayer/AgoraVideoPlayer';
 import React, { ChangeEventHandler } from 'react';
 import { FaCamera } from 'react-icons/fa';
 import { Input, InputGroup, InputGroupAddon, InputGroupText } from 'reactstrap';
-import { useAgoraContext, useAgoraDispatch } from '_context/AgoraContext';
+import { useAgoraContext, useAgoraDispatch } from '_lib/agora/AgoraContext';
 import { useAgoraDevice } from '_lib/agora/useAgoraDevice';
 
 type Props = {

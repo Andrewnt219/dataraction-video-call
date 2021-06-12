@@ -4,10 +4,10 @@ import type {
   MicrophoneAudioTrackInitConfig,
 } from 'agora-rtc-sdk-ng';
 import axios from 'axios';
-import { NEXT_PUBLIC_AGORA_APP_ID } from 'constants/agora';
 import { useCallback, useEffect } from 'react';
-import { useAgoraContext, useAgoraDispatch } from '_context/AgoraContext';
 import { useAlertContext } from '_context/AlertContext';
+import { NEXT_PUBLIC_AGORA_APP_ID } from '_lib/agora/agora-constants';
+import { useAgoraContext, useAgoraDispatch } from '_lib/agora/AgoraContext';
 import type * as ApiAgoraGetRoomToken from '_pages/api/agora/getRoomToken';
 import { getErrorMessage } from '_utils/convert-utils';
 export const useAgoraHandlers = () => {
@@ -66,7 +66,7 @@ export const useAgoraHandlers = () => {
         await createLocalVideoAndAudioTrack();
 
         await client
-          ?.join(NEXT_PUBLIC_AGORA_APP_ID, channelName, token, uid)
+          .join(NEXT_PUBLIC_AGORA_APP_ID, channelName, token, uid)
           .catch(handleError);
 
         dispatch({ type: 'JOIN_ROOM', payload: { channelName, token } });
@@ -194,7 +194,7 @@ export const useAgoraHandlers = () => {
     dispatch({ type: 'TOGGLE_AUDIO' });
 
     return;
-  }, [dispatch, state.localAudioTrack]);
+  }, [dispatch]);
 
   const toggleVideo = useCallback(() => {
     dispatch({ type: 'TOGGLE_VIDEO' });

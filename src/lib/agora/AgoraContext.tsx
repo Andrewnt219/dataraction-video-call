@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useReducer } from 'react';
 import * as agoraSlice from '_lib/agora/agora-store';
+import { useAlertContext } from '../../context/AlertContext';
 type Context = agoraSlice.State;
 const Context = React.createContext<Context | undefined>(undefined);
 
@@ -16,6 +17,22 @@ const AgoraProvider = ({ children }: ProviderProps) => {
     agoraSlice.reducer,
     agoraSlice.initialState
   );
+
+  const { trigger } = useAlertContext();
+
+  React.useEffect(() => {
+    import('agora-rtc-sdk-ng')
+      .then(({ default: AgoraRTC }) => {
+        const agoraClient = AgoraRTC.createClient({
+          codec: 'h264',
+          mode: 'rtc',
+        });
+
+        dispatch({ type: 'INIT_CLIENT', payload: agoraClient });
+        dispatch({ type: 'INIT_RTC', payload: AgoraRTC });
+      })
+      .catch(() => trigger('danger', 'Fail to install Agora'));
+  }, [dispatch, trigger]);
 
   return (
     <Context.Provider value={state}>
