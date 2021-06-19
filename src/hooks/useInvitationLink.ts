@@ -10,12 +10,7 @@ export const useInvitationLinkWriter = () => {
   const [invitation, setInvitation] = useState<string>('');
 
   useEffect(() => {
-    if (
-      state.token &&
-      state.channelName &&
-      state.localAudioTrack &&
-      state.localVideoTrack
-    ) {
+    if (state.token && state.channelName) {
       const invitationLink =
         window.location.origin +
         `?token=${encodeURIComponent(
@@ -26,12 +21,7 @@ export const useInvitationLinkWriter = () => {
     } else {
       setInvitation('');
     }
-  }, [
-    state.token,
-    state.localAudioTrack,
-    state.localVideoTrack,
-    state.channelName,
-  ]);
+  }, [state.token, state.channelName]);
 
   return invitation;
 };

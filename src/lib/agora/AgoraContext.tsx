@@ -37,7 +37,7 @@ const AgoraProvider = ({ children }: ProviderProps) => {
   /*  Set up listenners for room's event */
   React.useEffect(() => {
     const client = state.client;
-    console.log(client);
+
     if (!client) return;
 
     dispatch({ type: 'SET_REMOTE_USER', payload: client.remoteUsers });
